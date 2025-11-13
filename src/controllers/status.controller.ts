@@ -4,7 +4,7 @@ import statusService from '../services/status.service';
 
 const statusController = {
   // Get server health status
-  getStatus: expressAsyncHandler(async (req: Request, res: Response) => {
+  getStatus: expressAsyncHandler(async (_req: Request, res: Response) => {
     const status = await statusService.getStatus();
 
     // Return 503 if unhealthy, 200 if healthy
@@ -21,7 +21,7 @@ const statusController = {
   }),
 
   // Simple ping endpoint
-  ping: expressAsyncHandler(async (req: Request, res: Response) => {
+  ping: expressAsyncHandler(async (_req: Request, res: Response) => {
     const pingData = await statusService.ping();
 
     res.status(200).json({

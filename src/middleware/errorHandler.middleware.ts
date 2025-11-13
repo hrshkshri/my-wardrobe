@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/AppError';
-import { Prisma } from '../generated/prisma';
+import { Prisma } from '../generated/prisma/client';
 
 export const errorHandler = (
   err: Error,
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   // Default error
   let statusCode = 500;

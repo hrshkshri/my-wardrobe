@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health check route
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'Welcome to My Wardrobe API',
@@ -29,7 +29,7 @@ app.use('/api/status', statusRoutes);
 // Example: app.use('/api/users', userRoutes);
 
 // 404 Handler - Must be after all routes
-app.use((req: Request, res: Response, next: NextFunction) => {
+app.use((req: Request, _res: Response, _next: NextFunction) => {
   throw new AppError(`Route ${req.originalUrl} not found`, 404);
 });
 

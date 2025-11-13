@@ -1,14 +1,10 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import { noteService } from '../services/note.service';
 
 // Get all notes
 export const getAllNotes = async (req: Request, res: Response) => {
   try {
-    const notes = await prisma.note.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const notes = await noteService.getAllNotes();
     res.json(notes);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch notes' });
@@ -19,9 +15,7 @@ export const getAllNotes = async (req: Request, res: Response) => {
 export const getNoteById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const note = await prisma.note.findUnique({
-      where: { id },
-    });
+    const note = await noteService.getNoteById(id);
 
     if (!note) {
       return res.status(404).json({ error: 'Note not found' });
@@ -42,13 +36,7 @@ export const createNote = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Title and content are required' });
     }
 
-    const note = await prisma.note.create({
-      data: {
-        title,
-        content,
-      },
-    });
-
+    const note = await noteService.createNote(title, content);
     res.status(201).json(note);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create note' });
@@ -61,14 +49,7 @@ export const updateNote = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { title, content } = req.body;
 
-    const note = await prisma.note.update({
-      where: { id },
-      data: {
-        ...(title && { title }),
-        ...(content && { content }),
-      },
-    });
-
+    const note = await noteService.updateNote(id, title, content);
     res.json(note);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update note' });
@@ -80,10 +61,7 @@ export const deleteNote = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    await prisma.note.delete({
-      where: { id },
-    });
-
+    await noteService.deleteNote(id);
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete note' });

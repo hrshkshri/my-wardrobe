@@ -4,6 +4,7 @@
 **Last Updated:** 2025-11-13
 
 > **Note:** These diagrams use Mermaid syntax. You can view them rendered in:
+>
 > - GitHub (automatic rendering)
 > - VS Code (with Mermaid extension)
 > - Online: https://mermaid.live/
@@ -90,15 +91,39 @@ flowchart TD
     CreateWard --> AddCat[Add Categories<br/>Tops, Bottoms, Shoes]
     AddCat --> AddItems[Add Clothing Items<br/>Photos, Tags, Status]
 
-    StylistSetup --> StyProfile[Fill Stylist Profile:<br/>Bio, Expertise, Pricing<br/>Portfolio, Languages]
-    StyProfile --> GoLive[Profile Goes Live ✓<br/>Visible to All Users]
-    GoLive --> CreateWard
+    StylistSetup --> CreateWard
 
     AddItems --> Dashboard[📱 Main Dashboard]
 
+    Dashboard --> Action{Choose Action}
+
+    Action -->|1️⃣ Wardrobe| WardAction[View Items<br/>Add/Edit Items<br/>Switch Wardrobe<br/>Mark Laundry Status]
+    WardAction --> Dashboard
+
+    Action -->|2️⃣ Outfits| OutfitAction[Create Outfit<br/>Select Items → Save<br/>Browse Library<br/>Categorize & Tag]
+    OutfitAction --> Dashboard
+
+    Action -->|3️⃣ Calendar| CalendarAction[Plan Outfits<br/>Pick Date → Assign Outfit<br/>View Weekly Plan]
+    CalendarAction --> Dashboard
+
+    Action -->|4️⃣ Friends| FriendAction[Add Friends<br/>Share Wardrobe/Outfits<br/>Get Suggestions]
+    FriendAction --> Dashboard
+
+    Action -->|5️⃣ Get Stylist| StylistFlow[Request Help]
+    StylistFlow --> RequestForm[Fill Form:<br/>Occasion, Style, Budget]
+    RequestForm --> WaitMatch[Notify Stylists]
+    WaitMatch --> SessionStart[Stylist Accepts<br/>Chat + Call Session]
+    SessionStart --> GetHelp[Receive Suggestions<br/>Save to Library]
+    GetHelp --> RateAndPay[Rate ⭐ → Pay/Free]
+    RateAndPay --> Dashboard
+
     style Start fill:#4CAF50
     style Dashboard fill:#2196F3
-    style GoLive fill:#4CAF50
+    style WardAction fill:#9C27B0
+    style OutfitAction fill:#FF9800
+    style CalendarAction fill:#00BCD4
+    style FriendAction fill:#E91E63
+    style StylistFlow fill:#FF5722
 ```
 
 ---
@@ -635,20 +660,24 @@ graph TD
 ## 📌 How to Use These Diagrams
 
 ### In GitHub
+
 - Diagrams render automatically in `.md` files
 - No additional tools needed
 
 ### In VS Code
+
 1. Install extension: "Markdown Preview Mermaid Support"
 2. Open this file
 3. Press `Ctrl+Shift+V` (or `Cmd+Shift+V` on Mac)
 
 ### Online Rendering
+
 - Visit: https://mermaid.live/
 - Copy paste any diagram code
 - Edit and export as PNG/SVG
 
 ### In Documentation Tools
+
 - Notion: Use `/code` block with language `mermaid`
 - Confluence: Install Mermaid macro
 - GitBook: Native support

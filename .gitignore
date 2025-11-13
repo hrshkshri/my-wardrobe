@@ -34,5 +34,3 @@ coverage/
 
 # Misc
 .husky/_
-
-/src/generated/prisma

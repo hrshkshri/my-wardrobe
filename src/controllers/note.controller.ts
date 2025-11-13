@@ -2,16 +2,16 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 
 // Get all notes
-export const getAllNotes = async (req: Request, res: Response) => {
+export const getAllNotes = async (_req: Request, res: Response) => {
   try {
     const notes = await prisma.note.findMany({
       orderBy: {
         createdAt: 'desc',
       },
     });
-    res.json(notes);
+    return res.json(notes);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch notes' });
+    return res.status(500).json({ error: 'Failed to fetch notes' });
   }
 };
 
@@ -27,9 +27,9 @@ export const getNoteById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Note not found' });
     }
 
-    res.json(note);
+    return res.json(note);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch note' });
+    return res.status(500).json({ error: 'Failed to fetch note' });
   }
 };
 
@@ -49,9 +49,9 @@ export const createNote = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json(note);
+    return res.status(201).json(note);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create note' });
+    return res.status(500).json({ error: 'Failed to create note' });
   }
 };
 
@@ -69,9 +69,9 @@ export const updateNote = async (req: Request, res: Response) => {
       },
     });
 
-    res.json(note);
+    return res.json(note);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update note' });
+    return res.status(500).json({ error: 'Failed to update note' });
   }
 };
 
@@ -84,8 +84,8 @@ export const deleteNote = async (req: Request, res: Response) => {
       where: { id },
     });
 
-    res.status(204).send();
+    return res.status(204).send();
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete note' });
+    return res.status(500).json({ error: 'Failed to delete note' });
   }
 };

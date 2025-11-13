@@ -19,9 +19,10 @@
 4. [Outfit Creation & Library](#4-outfit-creation--library)
 5. [Outfit Planner (Calendar)](#5-outfit-planner-calendar)
 6. [Friends & Sharing](#6-friends--sharing)
-7. [Stylist Session Flow](#7-stylist-session-flow)
-8. [System Architecture](#8-system-architecture)
-9. [Database Schema Overview](#9-database-schema-overview)
+7. [Stylist Journey (Stylist POV)](#7-stylist-journey-stylist-pov)
+8. [Stylist Session Flow (User POV)](#8-stylist-session-flow-user-pov)
+9. [System Architecture](#9-system-architecture)
+10. [Database Schema Overview](#10-database-schema-overview)
 
 ---
 
@@ -349,7 +350,147 @@ flowchart TD
 
 ---
 
-## 7. Stylist Session Flow
+## 7. Stylist Journey (Stylist POV)
+
+### Complete Stylist Experience
+
+```mermaid
+flowchart TD
+    Start([Stylist Signs Up]) --> Profile[Create Stylist Profile]
+    Profile --> FillProfile[Fill Profile Details:<br/>• Bio & Experience<br/>• Expertise Tags<br/>• Pricing: ₹299/session<br/>• Portfolio Images<br/>• Languages]
+
+    FillProfile --> GoLive[✓ Profile Goes Live Instantly!<br/>Visible to All Users]
+    GoLive --> Dashboard[📱 Stylist Dashboard]
+
+    Dashboard --> AvailToggle[Set Availability: ON 🟢]
+    AvailToggle --> WaitReq[Wait for Requests]
+
+    WaitReq --> Notif[📱 Push Notification:<br/>'New Request Available!'<br/>Wedding - Traditional Indian<br/>Timeline: 2 days<br/>Earnings: ₹239]
+
+    Notif --> ViewReq[View Request Details:<br/>• Client: Sarah K.<br/>• Occasion & Timeline<br/>• Style Preference<br/>• Budget<br/>• Preview Wardrobe Access]
+
+    ViewReq --> Decision{Accept Request?}
+    Decision -->|No| Decline[Decline Request<br/>Back to waiting]
+    Decline --> WaitReq
+
+    Decision -->|Yes| QuickAccept[Click 'Accept'<br/>Race with other stylists]
+    QuickAccept --> CheckWin{Got it?}
+
+    CheckWin -->|Another stylist faster| Missed[Missed Request 😞<br/>Try next time]
+    Missed --> WaitReq
+
+    CheckWin -->|Yes! First to accept| Won[✓ Session Starts!<br/>Client Matched]
+
+    Won --> Access[Access Client's Wardrobe:<br/>65 items available<br/>Filter by category]
+
+    Access --> CreateOutfits[Create Outfit Suggestions:<br/>Browse items<br/>Combine pieces<br/>Save 2-3 options]
+
+    CreateOutfits --> StartChat[Chat Opens with Client]
+    StartChat --> SendSugg[Send Outfit Suggestions:<br/>'Hi! I have 3 ideas for you']
+
+    SendSugg --> ChatActions{Session Actions}
+
+    ChatActions -->|Text Chat| Exchange[Exchange Messages:<br/>Discuss preferences<br/>Answer questions<br/>Share styling tips]
+    Exchange --> ChatActions
+
+    ChatActions -->|Audio Call| InitCall[Client Requests Call<br/>or Stylist Offers]
+    InitCall --> OnCall[Audio Call In Progress:<br/>Discuss in detail<br/>Accessory advice<br/>Makeup tips<br/>Hair suggestions]
+    OnCall --> EndCall[End Call]
+    EndCall --> ChatActions
+
+    ChatActions -->|Send More| RefineOutfits[Create/Refine Outfits<br/>Based on Feedback]
+    RefineOutfits --> ChatActions
+
+    ChatActions -->|Ready to End| ClientEnd{Client<br/>Ready?}
+    ClientEnd -->|No, continue| ChatActions
+    ClientEnd -->|Yes| EndSession[End Session]
+
+    EndSession --> Earn[💰 Earn ₹239<br/>Added to Wallet]
+    Earn --> WaitReview[Wait for Client Review]
+
+    WaitReview --> GetReview[Receive Rating & Review:<br/>⭐⭐⭐⭐⭐ 5 stars<br/>'Super helpful!']
+
+    GetReview --> UpdateProfile[Profile Auto-Updated:<br/>• Total Sessions: 52 → 53<br/>• Avg Rating: 4.8 → 4.82 ⭐<br/>• New Review Visible]
+
+    UpdateProfile --> CheckWallet{Want to<br/>Withdraw?}
+    CheckWallet -->|Not yet| BackDash[Back to Dashboard]
+    CheckWallet -->|Yes| Withdraw[Withdraw Earnings:<br/>Min ₹500<br/>Transfer to Bank]
+
+    Withdraw --> BackDash
+    BackDash --> AvailCheck{Still<br/>Available?}
+    AvailCheck -->|Yes| WaitReq
+    AvailCheck -->|No| ToggleOff[Toggle Availability OFF<br/>Take a break]
+
+    style Start fill:#9C27B0
+    style GoLive fill:#4CAF50
+    style Dashboard fill:#2196F3
+    style Won fill:#4CAF50
+    style Earn fill:#FFD700
+    style GetReview fill:#4CAF50
+    style Notif fill:#FF9800
+```
+
+### Stylist Dashboard Features
+
+```mermaid
+flowchart LR
+    Dashboard[Stylist Dashboard] --> Stats[View Stats:<br/>Today's Sessions: 3<br/>Today's Earnings: ₹717<br/>Avg Rating: 4.9 ⭐]
+
+    Dashboard --> Avail[Toggle Availability:<br/>🟢 ON / ⭕ OFF]
+
+    Dashboard --> Wallet[Wallet:<br/>Balance: ₹12,450<br/>Withdraw to Bank]
+
+    Dashboard --> Profile[Edit Profile:<br/>Update Bio<br/>Add Portfolio<br/>Change Pricing]
+
+    Dashboard --> Sessions[Session History:<br/>Past sessions<br/>Reviews received<br/>Earnings breakdown]
+
+    Dashboard --> Requests[Pending Requests:<br/>View available<br/>Accept/Decline]
+
+    Dashboard --> UseWardrobe[Use as General User:<br/>Manage own wardrobe<br/>Create outfits<br/>Request styling from others]
+
+    style Dashboard fill:#2196F3
+    style Wallet fill:#FFD700
+    style Stats fill:#4CAF50
+```
+
+### Stylist Earning Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as System
+    participant ST as Stylist
+    participant B as Bank
+
+    C->>S: Complete Session
+    S->>C: Request Payment: ₹299
+
+    alt Free Session (1-3)
+        C->>S: Use Free Session
+        S->>ST: No payment (0 sessions don't earn)
+        Note over ST: Build reputation first
+    else Paid Session (4+)
+        C->>S: Pay ₹299 via Razorpay
+        S->>S: Deduct Platform Fee (20%): ₹60
+        S->>ST: Transfer ₹239 to Wallet
+        Note over ST: Wallet: +₹239
+    end
+
+    ST->>S: Check Wallet Balance
+
+    alt Balance < ₹500
+        S->>ST: Cannot withdraw yet<br/>Min ₹500 required
+    else Balance >= ₹500
+        ST->>S: Request Withdrawal
+        S->>B: Transfer to Bank Account
+        B->>ST: Money Received ✓
+        S->>ST: Wallet Updated
+    end
+```
+
+---
+
+## 8. Stylist Session Flow (User POV)
 
 ### Complete Styling Session
 
@@ -449,7 +590,7 @@ flowchart LR
 
 ---
 
-## 8. System Architecture
+## 9. System Architecture
 
 ### High-Level Architecture
 
@@ -544,7 +685,7 @@ sequenceDiagram
 
 ---
 
-## 9. Database Schema Overview
+## 10. Database Schema Overview
 
 ### Core Entities Relationship
 

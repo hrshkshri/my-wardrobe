@@ -1,4 +1,5 @@
-import { prisma } from '../lib/prisma';
+import { prisma } from '../utils/prisma';
+import { logger } from '../utils/logger';
 import { StatusResponse } from '../types/status.types';
 
 const statusService = {
@@ -12,7 +13,7 @@ const statusService = {
         await prisma.$queryRaw`SELECT 1`;
         databaseStatus = 'connected';
       } catch (error) {
-        console.error('Database connection check failed:', error);
+        logger.error('Database connection check failed:', error);
         databaseStatus = 'disconnected';
       }
 

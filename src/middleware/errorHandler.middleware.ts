@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/AppError';
+import { logger } from '../utils/logger';
 import {
   PrismaClientKnownRequestError,
   PrismaClientValidationError,
@@ -46,10 +47,8 @@ export const errorHandler = (
     message = 'Invalid data provided';
   }
 
-  // Log error in development
-  if (process.env.NODE_ENV === 'development') {
-    console.error('Error:', err);
-  }
+  // Log error
+  logger.error('Error occurred:', err);
 
   // Send error response
   res.status(statusCode).json({

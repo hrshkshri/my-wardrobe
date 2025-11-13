@@ -3,15 +3,19 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import { AppError } from './utils/AppError';
+import { corsOptions } from './utils/corsOptions';
+import { apiLimiter } from './utils/rateLimiter';
+import { logger } from './utils/logger';
 import statusRoutes from './routes/status.routes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(apiLimiter);
 
 // Health check route
 app.get('/', (_req: Request, res: Response) => {
@@ -38,8 +42,8 @@ app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`Server is running on port ${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 export default app;

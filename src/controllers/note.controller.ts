@@ -1,69 +1,84 @@
 import { Request, Response } from 'express';
-import { noteService } from '../services/note.service';
+import expressAsyncHandler from 'express-async-handler';
+import noteService from '../services/note.service';
+import { AppError } from '../utils/AppError';
 
-// Get all notes
-export const getAllNotes = async (req: Request, res: Response) => {
-  try {
+const noteController = {
+  // Get all notes
+  getAllNotes: expressAsyncHandler(async (req: Request, res: Response) => {
     const notes = await noteService.getAllNotes();
-    res.json(notes);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch notes' });
-  }
-};
 
-// Get a single note by ID
-export const getNoteById = async (req: Request, res: Response) => {
-  try {
+    res.status(200).json({
+      success: true,
+      message: 'Notes retrieved successfully',
+      data: notes,
+    });
+  }),
+
+  // Get a single note by ID
+  getNoteById: expressAsyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
+
     const note = await noteService.getNoteById(id);
 
-    if (!note) {
-      return res.status(404).json({ error: 'Note not found' });
-    }
+    res.status(200).json({
+      success: true,
+      message: 'Note retrieved successfully',
+      data: note,
+    });
+  }),
 
-    res.json(note);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch note' });
-  }
-};
-
-// Create a new note
-export const createNote = async (req: Request, res: Response) => {
-  try {
+  // Create a new note
+  createNote: expressAsyncHandler(async (req: Request, res: Response) => {
     const { title, content } = req.body;
 
+    // Validation
     if (!title || !content) {
-      return res.status(400).json({ error: 'Title and content are required' });
+      throw new AppError('Title and content are required', 400);
     }
 
-    const note = await noteService.createNote(title, content);
-    res.status(201).json(note);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create note' });
-  }
-};
+    const note = await noteService.createNote({ title, content });
 
-// Update a note
-export const updateNote = async (req: Request, res: Response) => {
-  try {
+    res.status(201).json({
+      success: true,
+      message: 'Note created successfully',
+      data: note,
+    });
+  }),
+
+  // Update a note
+  updateNote: expressAsyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
     const { title, content } = req.body;
 
-    const note = await noteService.updateNote(id, title, content);
-    res.json(note);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update note' });
-  }
-};
+    // Validation - at least one field should be provided
+    if (!title && !content) {
+      throw new AppError(
+        'At least one field (title or content) must be provided',
+        400
+      );
+    }
 
-// Delete a note
-export const deleteNote = async (req: Request, res: Response) => {
-  try {
+    const note = await noteService.updateNote(id, { title, content });
+
+    res.status(200).json({
+      success: true,
+      message: 'Note updated successfully',
+      data: note,
+    });
+  }),
+
+  // Delete a note
+  deleteNote: expressAsyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
 
     await noteService.deleteNote(id);
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete note' });
-  }
+
+    res.status(200).json({
+      success: true,
+      message: 'Note deleted successfully',
+    });
+  }),
 };
+
+export default noteController;

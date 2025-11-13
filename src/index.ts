@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import noteRoutes from './routes/note.routes';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import { AppError } from './utils/AppError';
 
@@ -17,13 +16,14 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
-    message: 'Welcome to My Wardrobe Notes API',
+    message: 'Welcome to My Wardrobe API',
     version: '1.0.0',
   });
 });
 
 // API Routes
-app.use('/api/notes', noteRoutes);
+// Add your routes here
+// Example: app.use('/api/users', userRoutes);
 
 // 404 Handler - Must be after all routes
 app.use((req: Request, res: Response, next: NextFunction) => {

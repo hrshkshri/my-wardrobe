@@ -6,11 +6,16 @@ A TypeScript-based note backend API built with Express, Prisma, and PostgreSQL (
 
 - RESTful API for notes management
 - TypeScript for type safety
+- Robust error handling with custom AppError class
+- Service-Controller architecture pattern
+- Express async handler for better error management
 - Prisma ORM for database management
 - PostgreSQL database hosted on Supabase
+- Global error handler middleware
 - Prettier for code formatting
 - Husky for pre-commit hooks
 - CORS enabled
+- Consistent API response format
 
 ## Tech Stack
 
@@ -20,6 +25,7 @@ A TypeScript-based note backend API built with Express, Prisma, and PostgreSQL (
 - **Database**: PostgreSQL (Supabase)
 - **ORM**: Prisma
 - **Package Manager**: Yarn
+- **Error Handling**: express-async-handler + Custom AppError
 - **Code Formatting**: Prettier
 - **Git Hooks**: Husky + lint-staged
 
@@ -151,28 +157,92 @@ curl -X PUT http://localhost:3000/api/notes/{id} \
 curl -X DELETE http://localhost:3000/api/notes/{id}
 ```
 
+### API Response Format
+
+All API responses follow a consistent format:
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Operation successful message",
+  "data": { /* response data */ }
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Error message description"
+}
+```
+
+**Example Success Response (Get All Notes):**
+```json
+{
+  "success": true,
+  "message": "Notes retrieved successfully",
+  "data": [
+    {
+      "id": "uuid-here",
+      "title": "My Note",
+      "content": "Note content",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+**Example Error Response:**
+```json
+{
+  "success": false,
+  "message": "Note not found"
+}
+```
+
 ## Project Structure
 
 ```
 my-wardrobe/
 ├── prisma/
-│   ├── schema.prisma       # Prisma schema
-│   └── migrations/         # Database migrations
+│   ├── schema.prisma           # Prisma schema
+│   └── migrations/             # Database migrations
 ├── src/
-│   ├── controllers/        # Route controllers
-│   │   └── note.controller.ts
-│   ├── routes/             # API routes
-│   │   └── note.routes.ts
-│   ├── lib/                # Utility libraries
-│   │   └── prisma.ts       # Prisma client instance
-│   ├── generated/          # Generated Prisma client
-│   └── index.ts            # Application entry point
-├── dist/                   # Compiled JavaScript (after build)
-├── .env                    # Environment variables
-├── .prettierrc             # Prettier configuration
-├── tsconfig.json           # TypeScript configuration
-└── package.json            # Project dependencies
+│   ├── controllers/            # HTTP request/response handlers
+│   │   └── note.controller.ts  # Note controller with expressAsyncHandler
+│   ├── services/               # Business logic layer
+│   │   └── note.service.ts     # Note service with database operations
+│   ├── routes/                 # API route definitions
+│   │   └── note.routes.ts      # Note routes
+│   ├── middleware/             # Custom middleware
+│   │   └── errorHandler.middleware.ts  # Global error handler
+│   ├── types/                  # TypeScript type definitions
+│   │   └── note.types.ts       # Note-related types
+│   ├── utils/                  # Utility functions & classes
+│   │   └── AppError.ts         # Custom error class
+│   ├── lib/                    # External libraries setup
+│   │   └── prisma.ts           # Prisma client instance
+│   ├── generated/              # Generated Prisma client
+│   └── index.ts                # Application entry point
+├── dist/                       # Compiled JavaScript (after build)
+├── .env                        # Environment variables
+├── .prettierrc                 # Prettier configuration
+├── tsconfig.json               # TypeScript configuration
+└── package.json                # Project dependencies
 ```
+
+### Architecture
+
+The project follows a **layered architecture** pattern:
+
+1. **Controllers** (`src/controllers/`): Handle HTTP requests/responses and input validation
+2. **Services** (`src/services/`): Contain business logic and database operations
+3. **Middleware** (`src/middleware/`): Process requests before they reach controllers
+4. **Types** (`src/types/`): TypeScript interfaces and type definitions
+5. **Utils** (`src/utils/`): Reusable utility functions and classes
 
 ## Database Schema
 

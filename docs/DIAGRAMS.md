@@ -1,6 +1,6 @@
 # 📊 VYBE - Visual Diagrams
 
-**Document Version:** 1.0
+**Document Version:** 2.0
 **Last Updated:** 2025-11-13
 
 > **Note:** These diagrams use Mermaid syntax. You can view them rendered in:
@@ -12,335 +12,421 @@
 
 ## 📋 TABLE OF CONTENTS
 
-1. [User Type Relationships](#1-user-type-relationships)
-2. [General User Journey](#2-general-user-journey)
-3. [Stylist User Journey](#3-stylist-user-journey)
-4. [Styling Session Flow](#4-styling-session-flow)
-5. [Database Schema Overview](#5-database-schema-overview)
-6. [System Architecture](#6-system-architecture)
+1. [User Type & Role Selection](#1-user-type--role-selection)
+2. [Initial Setup & Onboarding](#2-initial-setup--onboarding)
+3. [Wardrobe Management](#3-wardrobe-management)
+4. [Outfit Creation & Library](#4-outfit-creation--library)
+5. [Outfit Planner (Calendar)](#5-outfit-planner-calendar)
+6. [Friends & Sharing](#6-friends--sharing)
+7. [Stylist Session Flow](#7-stylist-session-flow)
+8. [System Architecture](#8-system-architecture)
+9. [Database Schema Overview](#9-database-schema-overview)
 
 ---
 
-## 1. User Type Relationships
+## 1. User Type & Role Selection
+
+### Updated User Flow with Instant Stylist Onboarding
 
 ```mermaid
 graph TB
-    A[User Signs Up] --> B{Choose Role}
-    B -->|General User| C[User Profile]
-    B -->|Stylist| D[Stylist Profile]
-    B -->|Both| E[Hybrid Profile]
+    A[User Signs Up] --> B{Choose Initial Role}
 
-    C --> F[Can Use Wardrobe]
-    C --> G[Can Request Styling]
-    C --> H[Can Share Wardrobe]
+    B -->|I want to organize<br/>my wardrobe| C[General User]
+    B -->|I'm a Stylist| D[Stylist Onboarding]
+    B -->|Both| E[Setup Both]
 
-    D --> I[Can Provide Styling]
-    D --> J[Can Earn Money]
-    D --> K[Build Reputation]
+    C --> CF[✓ Use Wardrobe]
+    C --> CG[✓ Request Styling]
+    C --> CH[✓ Share Wardrobe]
+    C --> CBrowse[✓ Browse All Stylists]
 
-    E --> F
-    E --> G
-    E --> H
-    E --> I
-    E --> J
-    E --> K
-    E --> L[Switch Between Modes]
+    C --> Upgrade{Later: Want to<br/>become Stylist?}
+    Upgrade -->|Yes| UpgradeFlow[Create Stylist Profile]
+    UpgradeFlow --> InstantLive[✓ Profile Live Immediately!]
+    InstantLive --> Stylist[Now User + Stylist]
+    Upgrade -->|No| C
+
+    D --> DProfile[Create Stylist Profile<br/>Portfolio, Expertise, Pricing]
+    DProfile --> DInstant[✓ Go Live Instantly]
+    DInstant --> Stylist
+
+    E --> EProfile[Setup Everything]
+    EProfile --> Stylist
+
+    Stylist --> SF[✓ Use Wardrobe]
+    Stylist --> SG[✓ Request Styling from<br/>OTHER stylists]
+    Stylist --> SH[✓ Share Wardrobe]
+    Stylist --> SI[✓ Provide Styling Services]
+    Stylist --> SJ[✓ Earn Money]
+    Stylist --> SK[✓ Build Reputation<br/>Through Sessions & Reviews]
+    Stylist --> SL[✓ Switch Mode: User/Stylist]
+    Stylist --> SM[✓ Visible to All Users]
 
     style A fill:#e1f5ff
     style B fill:#fff4e1
     style C fill:#e8f5e9
+    style Stylist fill:#fff9c4
+    style Upgrade fill:#FF9800
     style D fill:#f3e5f5
-    style E fill:#fff9c4
+    style InstantLive fill:#4CAF50
+    style DInstant fill:#4CAF50
 ```
 
 ---
 
-## 2. General User Journey
+## 2. Initial Setup & Onboarding
 
-### 2.1 Complete User Flow
+### Complete Onboarding Flow
 
 ```mermaid
 flowchart TD
-    Start([User Opens App]) --> SignUp[Sign Up / Login]
-    SignUp --> Onboard[Onboarding Tutorial]
-    Onboard --> CreateWard[Create First Wardrobe]
-    CreateWard --> AddItems[Add Clothing Items]
+    Start([Open App]) --> Auth[Sign Up / Login]
+    Auth --> Role{Choose Role}
+    Role -->|User| UserSetup[User Onboarding]
+    Role -->|Stylist| StylistSetup[Stylist Profile Setup]
 
-    AddItems --> Decision1{What to do?}
+    UserSetup --> CreateWard[Create Wardrobe<br/>Name, Location]
+    CreateWard --> AddCat[Add Categories<br/>Tops, Bottoms, Shoes]
+    AddCat --> AddItems[Add Clothing Items<br/>Photos, Tags, Status]
 
-    Decision1 -->|Organize More| AddMore[Add More Items]
-    AddMore --> AddItems
+    StylistSetup --> StyProfile[Fill Stylist Profile:<br/>Bio, Expertise, Pricing<br/>Portfolio, Languages]
+    StyProfile --> GoLive[Profile Goes Live ✓<br/>Visible to All Users]
+    GoLive --> CreateWard
 
-    Decision1 -->|Create Outfit| BuildOutfit[Use Outfit Builder]
-    BuildOutfit --> SelectItems[Select Items]
-    SelectItems --> SaveOutfit[Save Outfit]
-    SaveOutfit --> OutfitLib[Outfit Library]
-
-    Decision1 -->|Need Help| RequestStyle[Request Styling]
-    RequestStyle --> FillForm[Fill Request Form]
-    FillForm --> ShareWard[Share Wardrobe Access]
-    ShareWard --> Wait[Wait for Stylist Match]
-    Wait --> Matched{Stylist Accepts?}
-
-    Matched -->|Yes| StartSession[Session Starts]
-    Matched -->|No| Timeout[Timeout - Retry]
-    Timeout --> RequestStyle
-
-    StartSession --> Chat[Chat with Stylist]
-    Chat --> Call{Need Call?}
-    Call -->|Yes| AudioCall[Audio Call]
-    Call -->|No| Continue[Continue Chat]
-    AudioCall --> GetSuggestions[Receive Outfit Suggestions]
-    Continue --> GetSuggestions
-
-    GetSuggestions --> Review[Review Suggestions]
-    Review --> EndSession[End Session]
-    EndSession --> Rate[Rate & Review Stylist]
-
-    Rate --> Payment{Free Sessions Left?}
-    Payment -->|Yes| Free[Use Free Session]
-    Payment -->|No| Pay[Pay ₹299 via Razorpay]
-
-    Free --> Done[Session Complete]
-    Pay --> Done
-
-    Done --> Decision1
+    AddItems --> Dashboard[📱 Main Dashboard]
 
     style Start fill:#4CAF50
-    style Done fill:#4CAF50
-    style RequestStyle fill:#2196F3
-    style Pay fill:#FF9800
-```
-
-### 2.2 Wardrobe Management Flow
-
-```mermaid
-stateDiagram-v2
-    [*] --> EmptyWardrobe
-    EmptyWardrobe --> AddingItems: Add First Item
-    AddingItems --> HasItems: Item Added
-    HasItems --> AddingItems: Add More
-    HasItems --> CreatingOutfit: Create Outfit
-    CreatingOutfit --> HasItems: Save Outfit
-    HasItems --> SharingWardrobe: Share with Friend/Stylist
-    SharingWardrobe --> SharedWardrobe: Access Granted
-    SharedWardrobe --> HasItems: Revoke Access
-    HasItems --> [*]
+    style Dashboard fill:#2196F3
+    style GoLive fill:#4CAF50
 ```
 
 ---
 
-## 3. Stylist User Journey
+## 3. Wardrobe Management
 
-### 3.1 Stylist Complete Flow
+### Wardrobe Operations Flow
 
 ```mermaid
 flowchart TD
-    Start([Stylist Opens App]) --> SignUp[Sign Up as Stylist]
-    SignUp --> CreateProfile[Create Stylist Profile]
-    CreateProfile --> AddInfo[Add Bio, Expertise, Pricing]
-    AddInfo --> UploadPort[Upload Portfolio]
-    UploadPort --> Submit[Submit for Approval]
-    Submit --> Wait[Wait for Admin Review]
-    Wait --> Approved{Approved?}
+    Dashboard[Dashboard] --> SelectWard[Select: Manage Wardrobe]
 
-    Approved -->|Yes| Dashboard[Stylist Dashboard]
-    Approved -->|No| Rejected[Rejection Feedback]
-    Rejected --> AddInfo
+    SelectWard --> ViewWard[View Active Wardrobe:<br/>'Home Mumbai']
 
-    Dashboard --> ToggleAvail[Set Availability: ON]
-    ToggleAvail --> WaitRequest[Wait for Requests]
+    ViewWard --> Actions{Wardrobe Actions}
 
-    WaitRequest --> Notif[📱 Receive Notification]
-    Notif --> ViewReq[View Request Details]
+    Actions -->|View/Edit Items| ViewItems[Browse Items<br/>Filter by Category<br/>Search by Name/Tag]
+    ViewItems --> ItemOps{Item Operations}
+    ItemOps -->|Edit| EditItem[Update Details<br/>Change Photos]
+    ItemOps -->|Delete| DelItem[Remove Item]
+    ItemOps -->|Status| UpdateStatus[Mark as:<br/>Available/Laundry/Repair]
+
+    Actions -->|Add New Item| AddForm[Upload Photo<br/>Fill Details:<br/>Name, Category, Tags<br/>Color, Brand, Season<br/>Status]
+    AddForm --> ItemSaved[Item Saved ✓]
+
+    Actions -->|Create New Wardrobe| NewWard[New Wardrobe:<br/>'Parents House Delhi'<br/>Add Categories]
+    NewWard --> WardCreated[Wardrobe Created ✓]
+
+    Actions -->|Switch Active| SwitchWard[Select Different Wardrobe:<br/>Home / Parents / Storage]
+    SwitchWard --> SetActive[Set as Active ✓]
+
+    Actions -->|Manage Categories| CatMenu[Add/Edit/Delete<br/>Categories]
+
+    EditItem --> ViewWard
+    DelItem --> ViewWard
+    UpdateStatus --> ViewWard
+    ItemSaved --> ViewWard
+    WardCreated --> ViewWard
+    SetActive --> ViewWard
+    CatMenu --> ViewWard
+
+    ViewWard --> BackDash[Back to Dashboard]
+
+    style Dashboard fill:#2196F3
+    style ViewWard fill:#9C27B0
+    style ItemSaved fill:#4CAF50
+```
+
+---
+
+## 4. Outfit Creation & Library
+
+### Outfit System Flow
+
+```mermaid
+flowchart TD
+    Dashboard[Dashboard] --> Choice{Choose}
+
+    Choice -->|Create Outfit| Builder[Outfit Builder]
+    Choice -->|Browse Library| Library[Outfit Library]
+
+    Builder --> UseWard[Using Active Wardrobe]
+    UseWard --> FilterItems[Filter: Available Items Only<br/>Hide: In Laundry, In Repair]
+
+    FilterItems --> SelectItems[Select Items:<br/>Browse by Category<br/>Pick Multiple Items]
+    SelectItems --> Preview[Preview Outfit<br/>See Combination]
+
+    Preview --> Happy{Happy with Look?}
+    Happy -->|No| SelectItems
+    Happy -->|Yes| SaveOutfit[Save Outfit]
+
+    SaveOutfit --> AddMeta[Add Details:<br/>Name, Category<br/>Tags, Season<br/>Occasion, Mood]
+    AddMeta --> Saved[✓ Saved to Library]
+
+    Saved --> Library
+
+    Library --> LibView[View All Outfits<br/>Categorized & Tagged]
+
+    LibView --> LibActions{Library Actions}
+
+    LibActions -->|Browse| FilterLib[Filter by:<br/>Category, Season<br/>Tags, Favorites]
+    FilterLib --> LibView
+
+    LibActions -->|Edit| EditOutfit[Modify Items<br/>Update Metadata]
+    EditOutfit --> LibView
+
+    LibActions -->|Delete| DelOutfit[Remove Outfit]
+    DelOutfit --> LibView
+
+    LibActions -->|To Calendar| ToCal[Add to Outfit Planner]
+    ToCal --> Calendar[Open Calendar]
+
+    LibActions -->|Share| ShareOutfit[Share with Friend]
+    ShareOutfit --> LibView
+
+    LibActions -->|Favorite| MarkFav[Mark as Favorite ⭐]
+    MarkFav --> LibView
+
+    LibView --> BackDash[Back to Dashboard]
+    Calendar --> BackDash
+
+    style Dashboard fill:#2196F3
+    style Builder fill:#FF9800
+    style Library fill:#9C27B0
+    style Saved fill:#4CAF50
+```
+
+---
+
+## 5. Outfit Planner (Calendar)
+
+### Calendar-Based Planning Flow
+
+```mermaid
+flowchart TD
+    Dashboard[Dashboard] --> Planner[Outfit Planner]
+
+    Planner --> CalView[Calendar View]
+
+    CalView --> ViewMode{Select View}
+    ViewMode -->|Day| DayView[Today's Outfit]
+    ViewMode -->|Week| WeekView[7-Day Plan]
+    ViewMode -->|Month| MonthView[Monthly Overview]
+
+    DayView --> CalView
+    WeekView --> CalView
+    MonthView --> CalView
+
+    CalView --> Actions{Planner Actions}
+
+    Actions -->|Add to Date| PickDate[Select Date]
+    PickDate --> Source{Outfit Source}
+
+    Source -->|From Library| BrowseLib[Browse Outfit Library<br/>Select Existing Outfit]
+    Source -->|Create New| BuildNew[Open Outfit Builder<br/>Create & Auto-assign]
+
+    BrowseLib --> SelectOut[Select Outfit]
+    SelectOut --> AssignDate[Assign to Date]
+    AssignDate --> AddNotes[Add Notes Optional:<br/>'Meeting at 2pm']
+    AddNotes --> Scheduled[✓ Outfit Scheduled]
+
+    BuildNew --> Scheduled
+    Scheduled --> CalView
+
+    Actions -->|View Plan| ViewWeek[See Weekly/Monthly Plan<br/>All Scheduled Outfits]
+    ViewWeek --> CalView
+
+    Actions -->|Edit/Remove| ModifyPlan[Edit Date<br/>Change Outfit<br/>Remove Plan]
+    ModifyPlan --> CalView
+
+    Actions -->|Mark Worn| MarkWorn[✓ Wore This Outfit]
+    MarkWorn --> TrackStats[Track Usage:<br/>Last Worn<br/>Times Worn<br/>Cost Per Wear]
+    TrackStats --> CalView
+
+    CalView --> BackDash[Back to Dashboard]
+
+    style Dashboard fill:#2196F3
+    style Planner fill:#00BCD4
+    style CalView fill:#4DD0E1
+    style Scheduled fill:#4CAF50
+```
+
+---
+
+## 6. Friends & Sharing
+
+### Social & Collaboration Flow
+
+```mermaid
+flowchart TD
+    Dashboard[Dashboard] --> Social[Friends & Sharing]
+
+    Social --> SocialMenu{Social Options}
+
+    SocialMenu -->|Friends| FriendList[Friends List]
+    FriendList --> FriendOps{Friend Operations}
+
+    FriendOps -->|Add Friend| AddFriend[Enter Email/Username<br/>Send Friend Request]
+    AddFriend --> ReqSent[Request Sent ✓]
+    ReqSent --> FriendList
+
+    FriendOps -->|View Requests| ViewReq[Pending Requests]
+    ViewReq --> Respond{Accept/Decline}
+    Respond -->|Accept| Accepted[Friend Added ✓]
+    Respond -->|Decline| Declined[Request Declined]
+    Accepted --> FriendList
+    Declined --> FriendList
+
+    FriendList --> SocialMenu
+
+    SocialMenu -->|Share Wardrobe| ShareWard[Select Friend & Wardrobe]
+    ShareWard --> SetPerm[Choose Permission:<br/>View Only / Suggest / Full Access]
+    SetPerm --> SetExp[Set Expiration Optional:<br/>1 week / 1 month / Never]
+    SetExp --> WardShared[Wardrobe Shared ✓]
+    WardShared --> SocialMenu
+
+    SocialMenu -->|Share Library| ShareLib[Select Friend<br/>Share Outfit Library]
+    ShareLib --> LibShared[Library Shared ✓<br/>Friend Can View & Get Ideas]
+    LibShared --> SocialMenu
+
+    SocialMenu -->|Share Planner| SharePlan[Select Friend<br/>Share Outfit Calendar]
+    SharePlan --> PlanShared[Planner Shared ✓<br/>Collaborative Planning]
+    PlanShared --> SocialMenu
+
+    SocialMenu -->|Suggestions| ViewSugg[Friend Suggestions<br/>From Your Wardrobe]
+    ViewSugg --> LikeIt{Like Suggestion?}
+    LikeIt -->|Yes| AcceptSugg[Save to Library ✓<br/>Thank Friend]
+    LikeIt -->|No| IgnoreSugg[Ignore Suggestion]
+    AcceptSugg --> ToLibrary[Added to Outfit Library]
+    ToLibrary --> ViewSugg
+    IgnoreSugg --> ViewSugg
+
+    ViewSugg --> SocialMenu
+    SocialMenu --> BackDash[Back to Dashboard]
+
+    style Dashboard fill:#2196F3
+    style Social fill:#E91E63
+    style FriendList fill:#EC407A
+    style WardShared fill:#4CAF50
+    style LibShared fill:#4CAF50
+    style PlanShared fill:#4CAF50
+```
+
+---
+
+## 7. Stylist Session Flow
+
+### Complete Styling Session
+
+```mermaid
+flowchart TD
+    Dashboard[Dashboard] --> NeedHelp[Need Styling Help]
+
+    NeedHelp --> CreateReq[Create Styling Request]
+    CreateReq --> FillForm[Fill Form:<br/>Occasion, Timeline<br/>Style Preference<br/>Budget Optional<br/>Notes]
+
+    FillForm --> Submit[Submit Request]
+    Submit --> AutoShare[Auto-share Active Wardrobe]
+    AutoShare --> Matching[Matching in Progress...<br/>Notify Available Stylists]
+
+    Matching --> Wait[Wait for Accept<br/>'5 stylists notified'<br/>Estimated: 2-5 min]
+
+    Wait --> Response{Stylist Response}
+    Response -->|No Accept| Timeout[Timeout After 5 min]
+    Timeout --> Retry[Notify More Stylists]
+    Retry --> Wait
+
+    Response -->|Accept| Matched[✓ Matched with Stylist!]
+    Matched --> ViewProfile[View Stylist Profile:<br/>Name, Rating, Experience<br/>Portfolio, Expertise]
+
+    ViewProfile --> StartSession[Session Starts]
+    StartSession --> ChatOpen[Chat Interface Opens]
+
+    ChatOpen --> SessionActions{Session Actions}
+
+    SessionActions -->|Text Chat| Chat[Exchange Messages<br/>Discuss Needs<br/>Share Ideas]
+    Chat --> SessionActions
+
+    SessionActions -->|Receive Outfits| GetSugg[Stylist Sends<br/>Outfit Suggestions]
+    GetSugg --> ReviewSugg[Review Each Outfit]
+    ReviewSugg --> LikeOutfit{Like Suggestions?}
+    LikeOutfit -->|Yes| SaveOutfit[Save to Library ✓]
+    LikeOutfit -->|Want More| AskMore[Request Changes]
+    AskMore --> SessionActions
+    SaveOutfit --> SessionActions
+
+    SessionActions -->|Audio Call| Call[Start Audio Call<br/>Discuss in Detail]
+    Call --> Discuss[Talk About:<br/>Accessories, Makeup<br/>Hair, Styling Tips]
+    Discuss --> EndCall[End Call]
+    EndCall --> SessionActions
+
+    SessionActions -->|End Session| ConfirmEnd{Ready to End?}
+    ConfirmEnd -->|No| SessionActions
+    ConfirmEnd -->|Yes| EndSession[End Session]
+
+    EndSession --> Rate[Rate & Review<br/>1-5 Stars<br/>Write Review]
+
+    Rate --> CheckPay{Free Sessions?}
+    CheckPay -->|Yes 1-3| Free[Use Free Session ✓<br/>Remaining: X/3]
+    CheckPay -->|No| Pay[Pay ₹299<br/>via Razorpay]
+
+    Pay --> PayMethod[Choose Payment:<br/>UPI, Card<br/>Net Banking, Wallet]
+    PayMethod --> PaySuccess[Payment Success ✓]
+
+    Free --> Complete[Session Complete ✓]
+    PaySuccess --> Complete
+
+    Complete --> Summary[Session Summary:<br/>Duration, Outfits Saved<br/>Rating Given]
+
+    Summary --> BackDash[Back to Dashboard]
+
+    style Dashboard fill:#2196F3
+    style NeedHelp fill:#FF5722
+    style Matched fill:#4CAF50
+    style StartSession fill:#FF9800
+    style Complete fill:#4CAF50
+```
+
+### Stylist-Side Flow (Receiving Requests)
+
+```mermaid
+flowchart LR
+    Notif[📱 Push Notification<br/>'New Request Available'] --> ViewReq[View Request Details:<br/>Occasion, Timeline<br/>Budget, User Wardrobe]
+
     ViewReq --> Decision{Accept?}
-
     Decision -->|No| Decline[Decline Request]
     Decision -->|Yes| Accept[Accept Request]
-    Decline --> WaitRequest
 
-    Accept --> Matched{Got it?}
-    Matched -->|Another stylist faster| Missed[Missed Request]
-    Matched -->|Yes| SessionStart[Session Starts]
-    Missed --> WaitRequest
+    Accept --> Check{Got it?}
+    Check -->|Another stylist faster| Missed[Missed Request]
+    Check -->|Yes, First!| Session[Session Starts ✓<br/>Access Client Wardrobe]
 
-    SessionStart --> ViewWard[View Client Wardrobe]
-    ViewWard --> CreateOutfits[Create Outfit Suggestions]
-    CreateOutfits --> ChatClient[Chat with Client]
+    Session --> Work[Create Outfit Suggestions<br/>Chat with Client<br/>Provide Styling Advice]
+    Work --> End[End Session]
+    End --> Earn[Earn ₹239 ✓<br/>Added to Wallet]
+    Earn --> WaitReview[Wait for Review]
+    WaitReview --> GetReview[Receive Rating & Review<br/>Profile Updated]
 
-    ChatClient --> CallOption{Client Wants Call?}
-    CallOption -->|Yes| AudioCall[Audio Call]
-    CallOption -->|No| ContinueChat[Continue Chat]
-    AudioCall --> FinalSuggestion[Send Final Suggestions]
-    ContinueChat --> FinalSuggestion
-
-    FinalSuggestion --> EndSession[End Session]
-    EndSession --> EarnMoney[💰 Earn ₹239]
-    EarnMoney --> WaitReview[Wait for Review]
-    WaitReview --> GetReview[Receive Rating & Review]
-    GetReview --> UpdateProfile[Profile Updated]
-
-    UpdateProfile --> WaitRequest
-
-    style Start fill:#9C27B0
-    style EarnMoney fill:#4CAF50
-    style Accept fill:#2196F3
-```
-
-### 3.2 Stylist Availability State
-
-```mermaid
-stateDiagram-v2
-    [*] --> Offline
-    Offline --> Available: Toggle ON
-    Available --> Offline: Toggle OFF
-    Available --> Busy: Accept Request
-    Busy --> Available: Complete Session
-    Busy --> Offline: Toggle OFF (After Session)
+    style Notif fill:#FF9800
+    style Session fill:#4CAF50
+    style Earn fill:#4CAF50
 ```
 
 ---
 
-## 4. Styling Session Flow
+## 8. System Architecture
 
-### 4.1 Request-Match-Session Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as System
-    participant ST as Stylist 1
-    participant ST2 as Stylist 2
-
-    U->>S: Create Styling Request
-    Note over U,S: Occasion: Wedding<br/>Style: Traditional
-    S->>S: Find Matching Stylists
-
-    par Notify Multiple Stylists
-        S->>ST: 📱 Push Notification
-        S->>ST2: 📱 Push Notification
-    end
-
-    ST->>S: View Request
-    ST2->>S: View Request
-
-    Note over ST,ST2: Race to accept
-
-    ST->>S: Accept Request (First!)
-    S->>ST2: ❌ Request Taken
-    S->>U: ✅ Matched with Stylist 1
-
-    Note over U,ST: Session Starts
-
-    S->>ST: Grant Wardrobe Access
-    ST->>S: View User's Wardrobe
-    ST->>ST: Create Outfit Suggestions
-
-    ST->>U: Send Outfit 1
-    ST->>U: Send Outfit 2
-    U->>ST: "Love outfit 2!"
-    U->>ST: Request Audio Call
-
-    ST->>U: Start Audio Call
-    Note over U,ST: 10-minute call
-    ST->>U: End Call
-
-    ST->>U: Send Final Outfit
-    U->>ST: "Thank you! 💙"
-    ST->>S: End Session
-
-    S->>U: Request Rating
-    U->>S: Submit 5⭐ Rating
-    S->>ST: Update Profile (Rating)
-
-    alt Free Session Available
-        S->>U: Free Session Used (2 left)
-    else No Free Sessions
-        S->>U: Payment: ₹299
-        U->>S: Pay via Razorpay
-        S->>ST: Transfer ₹239 to Wallet
-    end
-```
-
-### 4.2 Session State Machine
-
-```mermaid
-stateDiagram-v2
-    [*] --> RequestCreated
-    RequestCreated --> Matching: System Notifies Stylists
-    Matching --> Matched: Stylist Accepts
-    Matching --> Expired: Timeout (No Accept)
-    Expired --> [*]
-
-    Matched --> Active: Session Starts
-    Active --> Chatting: Exchanging Messages
-    Chatting --> InCall: Audio Call Started
-    InCall --> Chatting: Call Ended
-    Chatting --> Completed: Stylist Ends Session
-
-    Completed --> Rated: User Submits Rating
-    Rated --> Paid: Payment Processed
-    Paid --> [*]
-```
-
----
-
-## 5. Database Schema Overview
-
-### 5.1 Core Entities Relationship
-
-```mermaid
-erDiagram
-    USER ||--o{ WARDROBE : owns
-    USER ||--o| STYLIST_PROFILE : "has (optional)"
-    USER ||--o{ STYLING_REQUEST : creates
-    USER ||--o{ STYLING_SESSION : participates
-    USER ||--o{ MESSAGE : sends
-    USER ||--o{ REVIEW : writes
-    USER ||--o| SUBSCRIPTION : subscribes
-
-    WARDROBE ||--o{ CATEGORY : contains
-    WARDROBE ||--o{ CLOTHING_ITEM : holds
-    WARDROBE ||--o{ WARDROBE_SHARE : "shared via"
-
-    CATEGORY ||--o{ CATEGORY : "has sub-categories"
-    CATEGORY ||--o{ CLOTHING_ITEM : categorizes
-
-    CLOTHING_ITEM ||--o{ OUTFIT_ITEM : "used in"
-
-    USER ||--o{ OUTFIT : creates
-    OUTFIT ||--o{ OUTFIT_ITEM : contains
-
-    STYLING_REQUEST ||--|| STYLING_SESSION : "becomes"
-    STYLING_SESSION ||--o{ MESSAGE : "has conversation"
-    STYLING_SESSION ||--|| REVIEW : "receives"
-    STYLING_SESSION ||--|| PAYMENT : "triggers"
-
-    STYLIST_PROFILE ||--o{ STYLING_SESSION : conducts
-    STYLIST_PROFILE ||--o{ REVIEW : receives
-```
-
-### 5.2 User Role Model
-
-```mermaid
-graph LR
-    A[User Table] --> B{Role}
-    B -->|USER| C[Can use wardrobe<br/>Can request styling]
-    B -->|STYLIST| D[Has StylistProfile table<br/>Can accept requests]
-    B -->|BOTH| E[Full access to both features<br/>Can switch modes]
-
-    D --> F[StylistProfile Table]
-    F --> G[expertise, pricing, rating]
-
-    style A fill:#2196F3
-    style F fill:#9C27B0
-```
-
----
-
-## 6. System Architecture
-
-### 6.1 High-Level Architecture
+### High-Level Architecture
 
 ```mermaid
 graph TB
@@ -398,7 +484,7 @@ graph TB
     style H fill:#9C27B0
 ```
 
-### 6.2 API Request Flow
+### API Request Flow
 
 ```mermaid
 sequenceDiagram
@@ -431,128 +517,117 @@ sequenceDiagram
     end
 ```
 
-### 6.3 Notification Flow
-
-```mermaid
-flowchart LR
-    A[User Creates<br/>Styling Request] --> B[System Finds<br/>Matching Stylists]
-    B --> C[Queue Push<br/>Notifications]
-    C --> D[Firebase Cloud<br/>Messaging]
-    D --> E1[📱 Stylist 1]
-    D --> E2[📱 Stylist 2]
-    D --> E3[📱 Stylist 3]
-
-    E1 --> F{First to<br/>Accept?}
-    E2 --> F
-    E3 --> F
-
-    F -->|Yes| G[Session Created]
-    F -->|No| H[Request Taken<br/>Notification]
-
-    style A fill:#4CAF50
-    style G fill:#2196F3
-    style H fill:#FF5722
-```
-
 ---
 
-## 7. Feature Modules Map
+## 9. Database Schema Overview
+
+### Core Entities Relationship
 
 ```mermaid
-mindmap
-  root((VYBE Platform))
-    Authentication
-      Email/Password
-      Google OAuth
-      Apple Sign-In
-      JWT Tokens
-    Wardrobe OS
-      Create Wardrobes
-      Add Items
-      Categories
-      Search & Filter
-      Image Upload
-    Outfit Builder
-      Select Items
-      Combine
-      Save Outfits
-      Tag Metadata
-    Stylist Marketplace
-      Stylist Profiles
-      Request Matching
-      Real-time Notifications
-      Session Management
-    Communication
-      In-app Chat
-      Audio Calls
-      Image Sharing
-      Outfit Sharing
-    Collaboration
-      Share Wardrobe
-      Permission Levels
-      Friend Invites
-      Collaborative Outfits
-    Payments
-      Razorpay Integration
-      Free Sessions Tracking
-      Premium Subscriptions
-      Stylist Earnings
-    Reviews & Ratings
-      Post-Session Rating
-      Written Reviews
-      Stylist Leaderboard
-    AI Features (Future)
-      Auto-tagging
-      Outfit Generation
-      Wardrobe Analytics
-      Smart Suggestions
+erDiagram
+    USER ||--o{ WARDROBE : owns
+    USER ||--o| STYLIST_PROFILE : "has (optional)"
+    USER ||--o{ STYLING_REQUEST : creates
+    USER ||--o{ STYLING_SESSION : participates
+    USER ||--o{ MESSAGE : sends
+    USER ||--o{ REVIEW : writes
+    USER ||--o| SUBSCRIPTION : subscribes
+    USER ||--o{ FRIENDSHIP : "has friends"
+    USER ||--o{ OUTFIT : creates
+
+    WARDROBE ||--o{ CATEGORY : contains
+    WARDROBE ||--o{ CLOTHING_ITEM : holds
+    WARDROBE ||--o{ WARDROBE_SHARE : "shared via"
+
+    CATEGORY ||--o{ CATEGORY : "has sub-categories"
+    CATEGORY ||--o{ CLOTHING_ITEM : categorizes
+
+    CLOTHING_ITEM ||--o{ OUTFIT_ITEM : "used in"
+
+    OUTFIT ||--o{ OUTFIT_ITEM : contains
+    OUTFIT ||--o{ OUTFIT_PLAN : "scheduled in"
+    OUTFIT ||--o{ OUTFIT_SHARE : "shared via"
+    OUTFIT ||--o{ OUTFIT_SUGGESTION : "suggested as"
+
+    OUTFIT_PLAN }o--|| USER : "planned by"
+
+    STYLING_REQUEST ||--|| STYLING_SESSION : "becomes"
+    STYLING_SESSION ||--o{ MESSAGE : "has conversation"
+    STYLING_SESSION ||--|| REVIEW : "receives"
+    STYLING_SESSION ||--|| PAYMENT : "triggers"
+
+    STYLIST_PROFILE ||--o{ STYLING_SESSION : conducts
+    STYLIST_PROFILE ||--o{ REVIEW : receives
+
+    FRIENDSHIP }o--|| USER : "requester"
+    FRIENDSHIP }o--|| USER : "addressee"
 ```
 
----
-
-## 8. Data Flow Diagrams
-
-### 8.1 Outfit Creation Flow
+### User & Role Model
 
 ```mermaid
-flowchart TD
-    A[User Opens<br/>Outfit Builder] --> B[Fetch User's<br/>Wardrobe Items]
-    B --> C[Display Items<br/>by Category]
-    C --> D[User Selects<br/>Items]
-    D --> E{Enough Items?}
-    E -->|No| C
-    E -->|Yes| F[Preview Outfit]
-    F --> G[Add Metadata<br/>Name, Season, Occasion]
-    G --> H[Save to Database]
-    H --> I[Generate Outfit ID]
-    I --> J[Create Outfit-Item<br/>Relations]
-    J --> K[Success Response]
-    K --> L[Display in<br/>Outfit Library]
+graph LR
+    A[User Table] --> B{Role}
+    B -->|USER| C[General User<br/>Can use wardrobe<br/>Can request styling<br/>Can upgrade to stylist]
+    B -->|STYLIST| D[Has StylistProfile<br/>All user features +<br/>Accept requests<br/>Earn money]
+
+    D --> F[StylistProfile Table]
+    F --> G[expertise<br/>pricing<br/>rating<br/>portfolio<br/>availability]
+
+    style A fill:#2196F3
+    style F fill:#9C27B0
+    style D fill:#FF9800
 ```
 
-### 8.2 Payment Flow
+### Key Tables
 
 ```mermaid
-flowchart TD
-    A[Session Ends] --> B{User Has Free<br/>Sessions Left?}
-    B -->|Yes| C[Deduct Free Session<br/>Counter]
-    C --> D[Mark Session as FREE]
-    D --> E[Update Stylist Stats]
-    E --> Z[Complete]
+graph TD
+    subgraph "User & Auth"
+        User[User<br/>id, email, name, role]
+        StylistProfile[StylistProfile<br/>bio, expertise, pricing<br/>rating, portfolio]
+    end
 
-    B -->|No| F[Calculate Amount<br/>₹299]
-    F --> G[Create Razorpay Order]
-    G --> H[Redirect to<br/>Razorpay Checkout]
-    H --> I{Payment Success?}
-    I -->|No| J[Payment Failed]
-    J --> K[Notify User]
-    K --> H
-    I -->|Yes| L[Verify Payment<br/>Signature]
-    L --> M[Mark Payment as SUCCESS]
-    M --> N[Calculate Platform Fee<br/>20% = ₹60]
-    N --> O[Transfer to Stylist<br/>₹239]
-    O --> P[Update Stylist Wallet]
-    P --> E
+    subgraph "Wardrobe System"
+        Wardrobe[Wardrobe<br/>name, location, isActive]
+        Category[Category<br/>name, parentId]
+        ClothingItem[ClothingItem<br/>name, images, tags<br/>color, season, status]
+    end
+
+    subgraph "Outfit System"
+        Outfit[Outfit<br/>name, category, tags<br/>season, occasion]
+        OutfitItem[OutfitItem<br/>Junction table]
+        OutfitPlan[OutfitPlan<br/>planDate, notes, worn]
+    end
+
+    subgraph "Social Features"
+        Friendship[Friendship<br/>status]
+        WardrobeShare[WardrobeShare<br/>permission, expiresAt]
+        OutfitShare[OutfitShare<br/>canEdit]
+        OutfitSuggestion[OutfitSuggestion<br/>message, status]
+    end
+
+    subgraph "Stylist Marketplace"
+        StylingRequest[StylingRequest<br/>occasion, timeline<br/>style, budget]
+        StylingSession[StylingSession<br/>startTime, endTime<br/>status, amount]
+        Message[Message<br/>content, type, isRead]
+        Review[Review<br/>rating, comment]
+        Payment[Payment<br/>amount, status<br/>razorpayId]
+    end
+
+    User --> Wardrobe
+    User --> StylistProfile
+    User --> Outfit
+    Wardrobe --> Category
+    Wardrobe --> ClothingItem
+    Outfit --> OutfitItem
+    OutfitItem --> ClothingItem
+    Outfit --> OutfitPlan
+
+    style User fill:#2196F3
+    style Wardrobe fill:#9C27B0
+    style Outfit fill:#FF9800
+    style StylingSession fill:#4CAF50
 ```
 
 ---

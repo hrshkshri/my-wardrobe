@@ -13,8 +13,9 @@
 4. [Outfit Creation & Library](#3-outfit-creation--library)
 5. [Outfit Planner (Calendar)](#4-outfit-planner-calendar)
 6. [Friends & Sharing](#5-friends--sharing)
-7. [Stylist Session](#6-stylist-session)
-8. [Navigation Summary](#navigation-summary)
+7. [Stylist Journey (Providing Services)](#6-stylist-journey-providing-services)
+8. [User Requesting Styling](#7-user-requesting-styling)
+9. [Navigation Summary](#navigation-summary)
 
 ---
 
@@ -520,7 +521,400 @@ If you save:
 
 ---
 
-## 6️⃣ STYLIST SESSION
+## 6️⃣ STYLIST JOURNEY (Providing Services)
+
+### Stylist's Daily Experience
+
+**From Dashboard → Receive Request → Provide Styling → Earn Money**
+
+#### A. Stylist Dashboard
+
+```
+After profile goes live, stylist sees dashboard:
+
+┌─────────────────────────────────┐
+│ STYLIST DASHBOARD               │
+├─────────────────────────────────┤
+│ Status: 🟢 Available            │
+│ [Toggle Availability]           │
+│                                 │
+│ Today's Stats:                  │
+│ - Sessions Completed: 3         │
+│ - Earnings Today: ₹717          │
+│ - Avg Rating: 4.9 ⭐            │
+│                                 │
+│ Wallet Balance: ₹12,450         │
+│ [Withdraw to Bank]              │
+│                                 │
+│ Pending Requests: 2             │
+│ [View Requests]                 │
+│                                 │
+│ Recent Reviews:                 │
+│ ⭐⭐⭐⭐⭐ "Excellent!" - Sarah │
+│ ⭐⭐⭐⭐⭐ "Very helpful!" - John│
+└─────────────────────────────────┘
+
+Options:
+├── View Available Requests
+├── Session History
+├── Edit Profile
+├── Earnings & Analytics
+└── Use as General User (wardrobe, outfits, etc.)
+```
+
+#### B. Receiving Request Notification
+
+```
+📱 Push Notification arrives:
+
+"New Styling Request Available! 🔔"
+
+Request Details:
+┌─────────────────────────────────┐
+│ NEW REQUEST                     │
+│                                 │
+│ Client: Sarah K.                │
+│ Occasion: Wedding               │
+│ Timeline: In 2 days (urgent)    │
+│ Style Preference:               │
+│  • Traditional Indian           │
+│  • Fusion                       │
+│ Budget: ₹1500                   │
+│                                 │
+│ Your Earnings: ₹239             │
+│ (₹299 - 20% platform fee)       │
+│                                 │
+│ Client's Wardrobe:              │
+│ 65 items available for review   │
+│                                 │
+│ ⚠️ 4 other stylists viewing     │
+│                                 │
+│ [View Full Details]             │
+│ [Accept Request]  [Decline]     │
+│                                 │
+│ ⏱️ Expires in: 4:32 minutes     │
+└─────────────────────────────────┘
+
+Decision factors:
+- Expertise match? ✓ (Bridal, Traditional)
+- Timeline works? ✓ (Available in 2 days)
+- Client wardrobe accessible? ✓
+- Good earnings? ✓ (₹239 for ~20 min)
+```
+
+#### C. Accepting Request (Race Mode)
+
+```
+Stylist clicks "Accept Request"
+  ↓
+System checks:
+  - Is this stylist still first to accept?
+  - Is request still available?
+  ↓
+Two outcomes:
+
+Outcome 1: ✓ Got it!
+┌─────────────────────────────────┐
+│ SUCCESS! You got the request! 🎉│
+│                                 │
+│ Client: Sarah K.                │
+│ Session started                 │
+│ Chat is now open                │
+│                                 │
+│ [View Client Wardrobe]          │
+│ [Start Chatting]                │
+└─────────────────────────────────┘
+
+Outcome 2: ✗ Missed
+┌─────────────────────────────────┐
+│ Request Already Accepted        │
+│                                 │
+│ Another stylist was faster.     │
+│ Don't worry, more requests      │
+│ coming soon!                    │
+│                                 │
+│ [Back to Dashboard]             │
+└─────────────────────────────────┘
+```
+
+#### D. Conducting Styling Session
+
+```
+Step 1: Review Client Wardrobe
+1. Click "View Client Wardrobe"
+   ↓
+2. See all 65 items organized:
+   ├── Tops (15 items)
+   ├── Bottoms (12 items)
+   ├── Dresses (8 items)
+   ├── Shoes (10 items)
+   └── Accessories (20 items)
+   ↓
+3. Filter for wedding-appropriate items:
+   - Color: Red, Gold, Burgundy
+   - Season: All Season
+   - Status: Available only
+   ↓
+4. Identify key pieces:
+   ✓ Red embroidered kurta
+   ✓ Gold dupatta
+   ✓ Burgundy crop top
+   ✓ Printed palazzo
+   ✓ Gold juttis
+   ✓ Statement jewelry
+
+---
+
+Step 2: Create Outfit Suggestions
+Using the outfit builder:
+   ↓
+Outfit 1: "Classic Traditional"
+├── Red kurta
+├── Gold dupatta
+├── Gold juttis
+└── Traditional earrings
+Save as suggestion ✓
+
+Outfit 2: "Modern Fusion"
+├── Burgundy crop top
+├── Printed palazzo
+├── Block heels
+└── Contemporary jewelry
+Save as suggestion ✓
+
+Outfit 3: "Elegant Saree Look"
+├── Silk saree (if available)
+├── Blouse
+├── Clutch
+└── Bangles
+Save as suggestion ✓
+
+---
+
+Step 3: Engage with Client
+Chat opens automatically:
+
+Priya (You): Hi Sarah! I've reviewed your wardrobe
+             and created 3 stunning options for the
+             wedding! 🎊
+
+             [Sends Outfit 1 preview]
+             [Sends Outfit 2 preview]
+             [Sends Outfit 3 preview]
+
+Sarah: Wow, these are beautiful! I love outfit 2!
+       Can you tell me more about it?
+
+Priya: Great choice! The burgundy crop top pairs
+       beautifully with the printed palazzo. It's
+       modern yet traditional enough for a wedding.
+
+Sarah: Perfect! Can we discuss accessories?
+
+Priya: Absolutely! Want to hop on a quick call?
+       [Sends Audio Call Request]
+
+Sarah accepts → Audio call starts
+
+During call (8 minutes):
+- Discuss accessory choices
+- Makeup recommendations
+- Hair styling ideas
+- Shoe comfort tips
+- Backup outfit suggestions
+
+Call ends → Back to chat
+
+Priya: I've finalized the look with accessory notes.
+       You're all set! Have an amazing time! 💃
+
+Sarah: Thank you so much! This is perfect! 🙏
+
+---
+
+Step 4: End Session
+Priya clicks "End Session"
+  ↓
+Session marked as complete
+  ↓
+Earnings: ₹239 added to wallet
+  ↓
+Wait for Sarah's review
+```
+
+#### E. Receiving Review & Earnings
+
+```
+After session ends:
+
+Sarah rates the session:
+⭐⭐⭐⭐⭐ 5 stars
+
+Review:
+"Super helpful! Priya understood exactly what I wanted.
+The fusion outfit is perfect and she gave great
+accessory tips. Very professional!"
+
+---
+
+Stylist Profile Auto-Updated:
+┌─────────────────────────────────┐
+│ Profile Changes:                │
+│                                 │
+│ Total Sessions: 52 → 53         │
+│ Average Rating: 4.80 → 4.82 ⭐  │
+│ Total Reviews: 45 → 46          │
+│                                 │
+│ New Review Added:               │
+│ ⭐⭐⭐⭐⭐ "Super helpful!" - Sarah │
+│                                 │
+│ Wallet Updated:                 │
+│ ₹12,211 → ₹12,450 (+₹239)      │
+└─────────────────────────────────┘
+
+Notification to stylist:
+"You received a 5-star review from Sarah! 🎉"
+```
+
+#### F. Withdrawing Earnings
+
+```
+Stylist Wallet:
+┌─────────────────────────────────┐
+│ WALLET                          │
+│                                 │
+│ Available Balance: ₹12,450      │
+│                                 │
+│ Earnings Breakdown:             │
+│ - This Week: ₹1,912             │
+│ - This Month: ₹8,450            │
+│ - All Time: ₹42,750             │
+│                                 │
+│ Sessions Completed:             │
+│ - This Week: 8                  │
+│ - This Month: 35                │
+│ - All Time: 178                 │
+│                                 │
+│ [Withdraw to Bank]              │
+│                                 │
+│ Minimum withdrawal: ₹500        │
+│ Processing time: 1-2 days       │
+└─────────────────────────────────┘
+
+Withdrawal Flow:
+1. Click "Withdraw to Bank"
+   ↓
+2. Enter amount: ₹10,000
+   ↓
+3. Select bank account (pre-saved)
+   ↓
+4. Confirm withdrawal
+   ↓
+5. Success:
+   "₹10,000 will be transferred to your bank
+   in 1-2 business days"
+   ↓
+6. Updated balance: ₹2,450
+```
+
+#### G. Managing Availability
+
+```
+Stylist can control when to receive requests:
+
+Availability Toggle:
+┌─────────────────────────────────┐
+│ AVAILABILITY                    │
+│                                 │
+│ Status: 🟢 AVAILABLE            │
+│ [Toggle OFF]                    │
+│                                 │
+│ When ON:                        │
+│ • Receive request notifications │
+│ • Show in stylist search        │
+│ • Visible to clients            │
+│                                 │
+│ When OFF:                       │
+│ • No new request notifications  │
+│ • Hidden from stylist search    │
+│ • Can still complete active     │
+│   sessions                      │
+└─────────────────────────────────┘
+
+Use cases for toggling OFF:
+- Taking a break
+- Busy with other work
+- Out of town
+- Want to focus on existing sessions
+```
+
+#### H. Stylist Analytics
+
+```
+View detailed analytics:
+
+┌─────────────────────────────────┐
+│ ANALYTICS & INSIGHTS            │
+├─────────────────────────────────┤
+│ Performance This Month:         │
+│ • Sessions: 35                  │
+│ • Earnings: ₹8,450              │
+│ • Avg Rating: 4.82 ⭐           │
+│ • Response Rate: 95%            │
+│ • Acceptance Rate: 78%          │
+│ • Completion Rate: 100%         │
+│                                 │
+│ Peak Hours:                     │
+│ 6-9 PM (most requests)          │
+│                                 │
+│ Top Request Types:              │
+│ 1. Weddings (40%)               │
+│ 2. Parties (30%)                │
+│ 3. Work Events (20%)            │
+│ 4. Casual (10%)                 │
+│                                 │
+│ Client Satisfaction:            │
+│ 5 stars: 82%                    │
+│ 4 stars: 15%                    │
+│ 3 stars: 3%                     │
+│                                 │
+│ Growth:                         │
+│ +25% sessions vs last month     │
+│ +₹2,100 earnings vs last month  │
+└─────────────────────────────────┘
+```
+
+#### I. Stylist as General User
+
+```
+Important: Stylists can ALSO use all general user features!
+
+As a stylist, you can:
+✓ Create your own wardrobes
+✓ Add your clothing items
+✓ Build and save outfits
+✓ Use the outfit planner
+✓ Share with friends
+✓ Request styling from OTHER stylists
+  (Cannot request from yourself)
+
+Example:
+Priya (Stylist) has a date night coming up
+  → Clicks "Get Styling Help"
+  → Creates request
+  → Another stylist (Rahul) accepts
+  → Priya receives styling help
+  → Pays ₹299 (she's using free sessions as a client)
+
+This way, stylists can:
+- Understand the user experience
+- Get help for their own fashion needs
+- Build empathy with clients
+```
+
+---
+
+## 7️⃣ USER REQUESTING STYLING
 
 ### Complete Styling Session Flow
 

@@ -94,6 +94,43 @@ enum RequestType {
   SCHEDULED  // Appointment-based - book for specific time
 }
 
+// ==================== FUTURE ENUMS ====================
+
+enum ItemCategory {
+  CLOTHING     // Traditional clothing items
+  FOOTWEAR     // Shoes, boots, sandals, etc.
+  ACCESSORY    // Bags, belts, scarves, hats
+  JEWELRY      // Rings, necklaces, bracelets, earrings
+  WATCH        // Watches and timepieces
+  EYEWEAR      // Sunglasses, glasses
+  OTHER        // Miscellaneous items
+}
+
+enum ListingType {
+  SALE    // Item for sale
+  RENT    // Item for rent
+}
+
+enum ListingStatus {
+  DRAFT       // Being created
+  ACTIVE      // Live and available
+  RESERVED    // Someone reserved it
+  SOLD        // Sold (for SALE type)
+  RENTED      // Currently rented (for RENT type)
+  COMPLETED   // Transaction completed
+  CANCELLED   // Listing cancelled
+  EXPIRED     // Listing expired
+}
+
+enum InteractionType {
+  VIEW          // User viewed item/outfit
+  LIKE          // User liked item/outfit
+  SAVE          // User saved item/outfit
+  SHARE         // User shared item/outfit
+  TRY_OUTFIT    // User tried outfit virtually
+  PURCHASE      // User purchased from affiliate link
+}
+
 // ==================== USER MODELS ====================
 
 model User {
@@ -134,6 +171,13 @@ model User {
   accessibleOutfits OutfitShare[] @relation("SharedWithUser_Outfit")
   outfitSuggestions OutfitSuggestion[]
   fcmTokens         FCMToken[]
+
+  // FUTURE: Marketplace & Recommendations
+  listings          Listing[] @relation("SellerListings")      // Items user is selling/renting
+  purchases         Listing[] @relation("BuyerPurchases")      // Items user bought/rented
+  interactions      UserInteraction[]                          // User behavior tracking
+  recommendationLogs RecommendationLog[]                       // Recommendations shown to user
+  followedBrands    BrandFollow[]                             // Brands user follows
 
   @@index([email])
   @@index([googleId])
@@ -239,20 +283,37 @@ model ClothingItem {
   price         Float?
   status        ItemStatus @default(AVAILABLE)
   isPrivate     Boolean   @default(false) // Private items hidden when sharing wardrobe
+
+  // FUTURE: Item categorization beyond clothing
+  itemCategory  ItemCategory @default(CLOTHING) // CLOTHING, FOOTWEAR, ACCESSORY, JEWELRY, etc.
+
+  // FUTURE: Brand integration
+  brandId       String?   // Link to Brand model for affiliate/partnership
+
+  // FUTURE: Recommendation & Analytics
+  viewCount     Int       @default(0) // Track how many times item viewed
+  wearCount     Int       @default(0) // Track how many times item worn (via outfit calendar)
+  lastWornAt    DateTime? // Last time item was worn
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   // Relations
   wardrobe      Wardrobe @relation(fields: [wardrobeId], references: [id], onDelete: Cascade)
   category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  brandModel    Brand? @relation(fields: [brandId], references: [id], onDelete: SetNull) // FUTURE
   images        ClothingImage[]
   outfitItems   OutfitItem[]
+  listings      Listing[] // FUTURE: Marketplace listings
+  interactions  UserInteraction[] // FUTURE: Track user interactions
 
   @@index([wardrobeId])
   @@index([categoryId])
   @@index([season])
   @@index([status])
   @@index([isPrivate])
+  @@index([itemCategory]) // FUTURE
+  @@index([brandId]) // FUTURE
 }
 
 model ClothingImage {
@@ -309,6 +370,9 @@ model Outfit {
   calendarEntries OutfitCalendarEntry[]
   suggestions OutfitSuggestion[]
   shares      OutfitShare[]
+
+  // FUTURE: Recommendations & Analytics
+  interactions UserInteraction[] // Track user interactions with outfits
 
   @@index([userId])
   @@index([season])
@@ -562,5 +626,209 @@ model Notification {
 
   @@index([userId])
   @@index([isRead])
+  @@index([createdAt])
+}
+
+// ==================== FUTURE: MARKETPLACE MODELS ====================
+
+model Listing {
+  id              String    @id @default(uuid())
+  itemId          String
+  sellerId        String
+  listingType     ListingType  // SALE or RENT
+  status          ListingStatus @default(DRAFT)
+
+  // Pricing
+  salePrice       Float?    // For SALE type
+  rentPricePerDay Float?    // For RENT type
+  originalPrice   Float?    // Original purchase price (for context)
+
+  // Listing Details
+  title           String
+  description     String
+  condition       String?   // New, Like New, Good, Fair
+  size            String?
+  measurements    Json?     // Custom measurements
+
+  // Rental specific
+  minRentalDays   Int?      // Minimum rental period
+  maxRentalDays   Int?      // Maximum rental period
+  securityDeposit Float?    // Security deposit for rentals
+
+  // Transaction
+  buyerId         String?   // Who bought/rented it
+  soldAt          DateTime? // When it was sold/rented
+  rentalStartDate DateTime? // For active rentals
+  rentalEndDate   DateTime? // For active rentals
+
+  // Analytics
+  viewCount       Int       @default(0)
+  favoriteCount   Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  expiresAt       DateTime? // Listing expiration
+
+  // Relations
+  item            ClothingItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  seller          User @relation("SellerListings", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyer           User? @relation("BuyerPurchases", fields: [buyerId], references: [id], onDelete: SetNull)
+
+  @@index([sellerId])
+  @@index([buyerId])
+  @@index([status])
+  @@index([listingType])
+  @@index([createdAt])
+}
+
+// ==================== FUTURE: BRAND & AFFILIATE MODELS ====================
+
+model Brand {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  slug            String    @unique
+  logo            String?
+  description     String?
+  website         String?
+
+  // Affiliate Integration
+  isPartner       Boolean   @default(false) // Partnership with VYBE
+  affiliateCode   String?   // Affiliate code for tracking
+  commissionRate  Float?    // Commission percentage (e.g., 10 = 10%)
+
+  // Brand Info
+  category        String?   // Type of brand (Luxury, Fast Fashion, etc.)
+  priceRange      String?   // Budget, Mid-range, Luxury
+  sustainability  String?   // Sustainability rating/info
+
+  // Social
+  instagram       String?
+  twitter         String?
+
+  // Stats
+  followersCount  Int       @default(0)
+  productsCount   Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  items           ClothingItem[] // User items from this brand
+  products        BrandProduct[] // Brand's product catalog
+  followers       BrandFollow[]  // Users following this brand
+
+  @@index([slug])
+  @@index([isPartner])
+}
+
+model BrandProduct {
+  id              String    @id @default(uuid())
+  brandId         String
+  name            String
+  slug            String
+  description     String?
+  images          String[]
+
+  // Pricing
+  price           Float
+  salePrice       Float?
+  currency        String    @default("INR")
+
+  // Product Details
+  category        String?
+  sizes           String[]
+  colors          String[]
+  inStock         Boolean   @default(true)
+
+  // Affiliate
+  affiliateUrl    String    // URL with affiliate tracking
+  productUrl      String    // Direct product URL
+
+  // Analytics
+  clickCount      Int       @default(0)
+  purchaseCount   Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  brand           Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId])
+  @@index([slug])
+  @@index([inStock])
+}
+
+model BrandFollow {
+  id        String   @id @default(uuid())
+  userId    String
+  brandId   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand     Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, brandId])
+  @@index([userId])
+  @@index([brandId])
+}
+
+// ==================== FUTURE: RECOMMENDATION & ANALYTICS MODELS ====================
+
+model UserInteraction {
+  id              String    @id @default(uuid())
+  userId          String
+  interactionType InteractionType
+
+  // What was interacted with (one of these will be set)
+  itemId          String?
+  outfitId        String?
+  brandProductId  String?   // For brand product clicks
+
+  // Context
+  metadata        Json?     // Additional context (e.g., where they saw it)
+  sessionId       String?   // Group interactions by session
+
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item            ClothingItem? @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  outfit          Outfit? @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([itemId])
+  @@index([outfitId])
+  @@index([interactionType])
+  @@index([createdAt])
+}
+
+model RecommendationLog {
+  id              String    @id @default(uuid())
+  userId          String
+
+  // Recommendation details
+  recommendationType String  // "outfit", "item", "brand_product"
+  recommendedIds  String[]  // IDs of recommended items/outfits
+  algorithm       String?   // Which algorithm was used
+
+  // User response
+  clicked         Boolean   @default(false)
+  clickedId       String?   // Which one they clicked
+  converted       Boolean   @default(false) // Did they take action (wear, buy, etc.)
+
+  // Context
+  context         Json?     // Why this recommendation (occasion, weather, etc.)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([recommendationType])
+  @@index([clicked])
   @@index([createdAt])
 }

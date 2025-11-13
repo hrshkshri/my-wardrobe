@@ -16,6 +16,7 @@
 5. [Indexes & Performance](#indexes--performance)
 6. [Data Integrity Rules](#data-integrity-rules)
 7. [Migration Strategy](#migration-strategy)
+8. [Future Features (V2+)](#future-features-v2)
 
 ---
 
@@ -864,19 +865,245 @@ Create `prisma/seed.ts` for development data:
 
 ---
 
+## 🔮 FUTURE FEATURES (V2+)
+
+The schema is designed to be future-proof with support for upcoming features. All future fields have default values and are optional, so they won't break current MVP functionality.
+
+### 🛒 Marketplace Features
+
+Users will be able to **sell or rent their clothing items** to other users.
+
+#### **New Models:**
+
+**Listing Model:**
+- Supports both SALE and RENT listing types
+- Tracks listing status (DRAFT, ACTIVE, SOLD, RENTED, etc.)
+- Rental-specific fields: `minRentalDays`, `maxRentalDays`, `securityDeposit`
+- Transaction tracking: `buyerId`, `soldAt`, `rentalStartDate`, `rentalEndDate`
+- Analytics: `viewCount`, `favoriteCount`
+
+**Future API Endpoints:**
+```
+POST   /api/marketplace/listings           - Create new listing
+GET    /api/marketplace/listings           - Browse all listings
+GET    /api/marketplace/listings/:id       - View single listing
+PUT    /api/marketplace/listings/:id       - Update listing
+DELETE /api/marketplace/listings/:id       - Delete listing
+POST   /api/marketplace/listings/:id/buy   - Purchase item
+POST   /api/marketplace/listings/:id/rent  - Rent item
+GET    /api/marketplace/my-listings        - User's active listings
+GET    /api/marketplace/my-purchases       - User's purchase history
+```
+
+#### **ClothingItem Enhancements:**
+
+Added **future fields** to existing ClothingItem model:
+- `itemCategory` (enum) - Beyond clothing: FOOTWEAR, ACCESSORY, JEWELRY, WATCH, EYEWEAR
+- `viewCount` - Track item views
+- `wearCount` - Track how often item is worn
+- `lastWornAt` - Last worn date
+- `brandId` - Link to Brand model
+
+---
+
+### 💍 Accessories & Beyond Clothing
+
+Support for items beyond traditional clothing.
+
+#### **Item Categories (Enum):**
+```prisma
+enum ItemCategory {
+  CLOTHING     // Traditional clothing
+  FOOTWEAR     // Shoes, boots, sandals
+  ACCESSORY    // Bags, belts, scarves, hats
+  JEWELRY      // Rings, necklaces, bracelets, earrings
+  WATCH        // Watches and timepieces
+  EYEWEAR      // Sunglasses, glasses
+  OTHER        // Miscellaneous items
+}
+```
+
+**Benefits:**
+- Comprehensive wardrobe management (not just clothes)
+- Better categorization and filtering
+- Specialized fields for different item types in future iterations
+
+---
+
+### 🏷️ Brand Collaborations & Affiliate Marketing
+
+Partner with brands to promote products and earn commission.
+
+#### **New Models:**
+
+**Brand Model:**
+- Brand catalog with logo, description, website
+- Partnership status: `isPartner`
+- Affiliate integration: `affiliateCode`, `commissionRate`
+- Brand metadata: `category`, `priceRange`, `sustainability`
+- Social links: Instagram, Twitter
+- Stats: `followersCount`, `productsCount`
+
+**BrandProduct Model:**
+- Product catalog from partner brands
+- Pricing: `price`, `salePrice`, `currency`
+- Product details: `category`, `sizes`, `colors`, `inStock`
+- Affiliate tracking: `affiliateUrl`, `productUrl`
+- Analytics: `clickCount`, `purchaseCount`
+
+**BrandFollow Model:**
+- Users can follow their favorite brands
+- Receive updates on new products
+- Personalized brand recommendations
+
+**Use Cases:**
+1. **Affiliate Links**: Show users where to buy similar items
+2. **Product Recommendations**: "Complete the look" with partner products
+3. **Commission Tracking**: Earn commission on user purchases through affiliate links
+4. **Brand Discovery**: Users discover new brands based on their style
+
+**Future API Endpoints:**
+```
+GET    /api/brands                        - Browse all brands
+GET    /api/brands/:slug                  - View brand details
+POST   /api/brands/:id/follow             - Follow a brand
+DELETE /api/brands/:id/unfollow           - Unfollow a brand
+GET    /api/brands/:id/products           - Brand's product catalog
+GET    /api/brands/recommendations        - Recommended brands for user
+POST   /api/brands/products/:id/click     - Track affiliate click
+```
+
+---
+
+### 🤖 Recommendation System
+
+AI-powered recommendations based on user behavior and outfit history.
+
+#### **New Models:**
+
+**UserInteraction Model:**
+- Tracks user behavior: VIEW, LIKE, SAVE, SHARE, TRY_OUTFIT, PURCHASE
+- Links to items, outfits, or brand products
+- Session tracking for grouped interactions
+- Metadata for additional context
+
+**RecommendationLog Model:**
+- Logs all recommendations shown to users
+- Tracks recommendation type: outfit, item, brand_product
+- Algorithm tracking for A/B testing
+- User response: `clicked`, `clickedId`, `converted`
+- Context for why recommendation was made
+
+**Data Collection:**
+- Item view history
+- Outfit creation patterns
+- Wear frequency (from calendar)
+- Favorite items/outfits
+- Sharing behavior
+- Purchase patterns
+
+**Recommendation Types:**
+1. **Outfit Recommendations**: Based on occasion, weather, past outfits
+2. **Item Recommendations**: "You might also like..." based on wardrobe
+3. **Brand Product Recommendations**: Affiliate products matching user style
+4. **Wardrobe Gap Analysis**: Suggest missing pieces for better combinations
+
+**Future API Endpoints:**
+```
+GET    /api/recommendations/outfits       - Get outfit recommendations
+GET    /api/recommendations/items         - Get item recommendations
+GET    /api/recommendations/products      - Get brand product recommendations
+GET    /api/recommendations/gaps          - Wardrobe gap analysis
+POST   /api/recommendations/:id/feedback  - User feedback on recommendation
+```
+
+---
+
+### 📊 Analytics & Insights
+
+**Item Analytics:**
+- Most worn items
+- Least worn items (closet dead stock)
+- Cost per wear calculation
+- Seasonal usage patterns
+- Color palette analysis
+
+**Outfit Analytics:**
+- Favorite outfit combinations
+- Outfit rotation frequency
+- Occasion-based insights
+- Success rate of stylist suggestions
+
+**User Behavior Analytics:**
+- Browsing patterns
+- Purchase conversion rates (marketplace)
+- Affiliate click-through rates
+- Recommendation effectiveness
+
+---
+
+### 🎯 Implementation Strategy
+
+**Phase 1 (MVP):** Core wardrobe + stylist marketplace
+- All future fields exist but not used
+- Schema supports future features without migration
+
+**Phase 2 (V1):** Enable marketplace
+- Activate Listing model
+- Launch sell/rent features
+- Start tracking analytics
+
+**Phase 3 (V2):** Brand partnerships
+- Activate Brand models
+- Implement affiliate tracking
+- Launch brand product catalog
+
+**Phase 4 (V3):** AI Recommendations
+- Start collecting interaction data
+- Build recommendation engine
+- Launch personalized suggestions
+
+---
+
 ## 📊 DATABASE STATISTICS
 
-**Total Models:** 21 (added OutfitShare)
-**Total Enums:** 11 (added RequestType)
-**Total Relations:** 52+
-**Total Indexes:** 38+
-**Average Model Size:** 8-12 fields
+### Current (MVP + Future-Proof)
+**Total Models:** 27
+- **MVP Models:** 21
+- **Future Models:** 6 (Listing, Brand, BrandProduct, BrandFollow, UserInteraction, RecommendationLog)
 
-### Recent Additions (v1.1)
-- **OutfitShare Model**: Share individual outfits with friends/stylists
-- **RequestType Enum**: Support both immediate (race mode) and scheduled appointments
-- **Privacy Controls**: `isPrivate` field on ClothingItem for privacy when sharing wardrobes
-- **Scheduled Sessions**: `scheduledStartTime` and `scheduledEndTime` on StylingRequest
+**Total Enums:** 15
+- **MVP Enums:** 11
+- **Future Enums:** 4 (ItemCategory, ListingType, ListingStatus, InteractionType)
+
+**Total Relations:** 70+
+**Total Indexes:** 50+
+**Average Model Size:** 8-15 fields
+
+### Model Breakdown by Domain
+| Domain | MVP Models | Future Models | Total |
+|--------|-----------|---------------|-------|
+| User Management | 3 | 0 | 3 |
+| Wardrobe System | 5 | 0 | 5 |
+| Outfit Management | 5 | 0 | 5 |
+| Stylist Marketplace | 4 | 0 | 4 |
+| Payments | 4 | 0 | 4 |
+| **Marketplace** | 0 | 1 | 1 |
+| **Brands & Affiliate** | 0 | 3 | 3 |
+| **Recommendations** | 0 | 2 | 2 |
+| **TOTAL** | **21** | **6** | **27** |
+
+### Schema Evolution
+
+**v1.0** (Initial)
+- 20 models, 10 enums
+- Core wardrobe + stylist marketplace
+
+**v1.1** (Current)
+- 27 models, 15 enums
+- Added: OutfitShare, RequestType, privacy controls, scheduled sessions
+- Added: Future marketplace, brand, and recommendation models
+- All future fields have defaults - no migration needed when activating features
 
 ---
 

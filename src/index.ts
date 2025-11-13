@@ -3,6 +3,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import { AppError } from './utils/AppError';
+import statusRoutes from './routes/status.routes';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,8 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // API Routes
+app.use('/api/status', statusRoutes);
+
 // Add your routes here
 // Example: app.use('/api/users', userRoutes);
 

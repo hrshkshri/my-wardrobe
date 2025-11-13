@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/AppError';
-import { Prisma } from '@prisma/client';
+import {
+  PrismaClientKnownRequestError,
+  PrismaClientValidationError,
+} from '@prisma/client/runtime/library';
 
 export const errorHandler = (
   err: Error,
@@ -19,7 +22,7 @@ export const errorHandler = (
   }
 
   // Handle Prisma errors
-  else if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  else if (err instanceof PrismaClientKnownRequestError) {
     // Unique constraint violation
     if (err.code === 'P2002') {
       statusCode = 409;
@@ -38,7 +41,7 @@ export const errorHandler = (
   }
 
   // Handle Prisma validation errors
-  else if (err instanceof Prisma.PrismaClientValidationError) {
+  else if (err instanceof PrismaClientValidationError) {
     statusCode = 400;
     message = 'Invalid data provided';
   }

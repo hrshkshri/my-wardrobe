@@ -89,6 +89,11 @@ enum RequestTimeline {
   FLEXIBLE
 }
 
+enum RequestType {
+  IMMEDIATE  // Race mode - first stylist to accept
+  SCHEDULED  // Appointment-based - book for specific time
+}
+
 // ==================== USER MODELS ====================
 
 model User {
@@ -125,6 +130,8 @@ model User {
   notifications     Notification[]
   sharedWardrobes   WardrobeShare[] @relation("WardrobeOwner")
   accessibleWardrobes WardrobeShare[] @relation("SharedWithUser")
+  sharedOutfits     OutfitShare[] @relation("OutfitOwner")
+  accessibleOutfits OutfitShare[] @relation("SharedWithUser_Outfit")
   outfitSuggestions OutfitSuggestion[]
   fcmTokens         FCMToken[]
 
@@ -231,6 +238,7 @@ model ClothingItem {
   purchaseDate  DateTime?
   price         Float?
   status        ItemStatus @default(AVAILABLE)
+  isPrivate     Boolean   @default(false) // Private items hidden when sharing wardrobe
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -244,6 +252,7 @@ model ClothingItem {
   @@index([categoryId])
   @@index([season])
   @@index([status])
+  @@index([isPrivate])
 }
 
 model ClothingImage {
@@ -299,6 +308,7 @@ model Outfit {
   items       OutfitItem[]
   calendarEntries OutfitCalendarEntry[]
   suggestions OutfitSuggestion[]
+  shares      OutfitShare[]
 
   @@index([userId])
   @@index([season])
@@ -357,6 +367,26 @@ model OutfitSuggestion {
   @@index([suggestedById])
 }
 
+model OutfitShare {
+  id          String    @id @default(uuid())
+  outfitId    String
+  ownerId     String
+  sharedWithId String
+  permission  SharePermission @default(VIEW_ONLY)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  outfit      Outfit @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  owner       User @relation("OutfitOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  sharedWith  User @relation("SharedWithUser_Outfit", fields: [sharedWithId], references: [id], onDelete: Cascade)
+
+  @@unique([outfitId, sharedWithId])
+  @@index([outfitId])
+  @@index([sharedWithId])
+}
+
 // ==================== STYLIST MARKETPLACE MODELS ====================
 
 model StylingRequest {
@@ -364,12 +394,15 @@ model StylingRequest {
   userId          String
   occasion        String
   timeline        RequestTimeline @default(FLEXIBLE)
+  requestType     RequestType @default(IMMEDIATE)
+  scheduledStartTime DateTime? // For SCHEDULED requests - appointment start
+  scheduledEndTime   DateTime? // For SCHEDULED requests - appointment end
   preferredStyles String[]
   budget          Float?
   notes           String?
   status          RequestStatus @default(PENDING)
   matchedStylistId String?
-  expiresAt       DateTime?
+  expiresAt       DateTime? // For IMMEDIATE requests - race mode expiry (5 min)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -380,6 +413,8 @@ model StylingRequest {
   @@index([userId])
   @@index([status])
   @@index([matchedStylistId])
+  @@index([requestType])
+  @@index([scheduledStartTime])
 }
 
 model StylingSession {

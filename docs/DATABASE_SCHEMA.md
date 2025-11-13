@@ -1,6 +1,6 @@
 # 🗄️ DATABASE SCHEMA DOCUMENTATION
 
-**Document Version:** 1.0
+**Document Version:** 1.1
 **Last Updated:** 2025-11-13
 **Database:** PostgreSQL (via Supabase)
 **ORM:** Prisma
@@ -21,7 +21,7 @@
 
 ## 1️⃣ OVERVIEW
 
-The VYBE database schema is designed to support a comprehensive fashion management and stylist marketplace platform. It consists of **20 models** organized into 5 functional domains:
+The VYBE database schema is designed to support a comprehensive fashion management and stylist marketplace platform. It consists of **21 models** organized into 5 functional domains:
 
 ### Domain Breakdown
 
@@ -29,7 +29,7 @@ The VYBE database schema is designed to support a comprehensive fashion manageme
 |--------|--------|---------|
 | **User Management** | User, StylistProfile, FCMToken | Authentication, profiles, notifications |
 | **Wardrobe System** | Wardrobe, Category, ClothingItem, ClothingImage, WardrobeShare | Digital wardrobe organization |
-| **Outfit Management** | Outfit, OutfitItem, OutfitCalendarEntry, OutfitSuggestion | Outfit creation & planning |
+| **Outfit Management** | Outfit, OutfitItem, OutfitCalendarEntry, OutfitSuggestion, OutfitShare | Outfit creation, planning & sharing |
 | **Stylist Marketplace** | StylingRequest, StylingSession, Message, Review | On-demand styling services |
 | **Payments** | Payment, Transaction, Withdrawal, Notification | Financial transactions |
 
@@ -155,6 +155,10 @@ Individual clothing pieces.
 - `brand` (String)
 - `purchaseDate`, `price` (Optional)
 - `status` (ItemStatus) - AVAILABLE, IN_LAUNDRY, IN_REPAIR, DONATED, SOLD
+- `isPrivate` (Boolean) - **NEW**: Mark items as private when sharing wardrobe
+
+**Privacy Feature:**
+When a user shares their wardrobe with friends or stylists, items marked as `isPrivate = true` will be hidden from the shared view. This allows users to maintain privacy for personal items (e.g., underwear, intimate wear) while still sharing their general wardrobe.
 
 **Status Workflow:**
 ```
@@ -249,6 +253,41 @@ Friend/stylist suggestions for shared wardrobes.
 
 ---
 
+#### **OutfitShare**
+**NEW**: Share individual outfits with friends or stylists.
+
+**Key Fields:**
+- `outfitId` (UUID) - The outfit being shared
+- `ownerId` (UUID) - User who owns the outfit
+- `sharedWithId` (UUID) - User receiving access
+- `permission` (SharePermission) - VIEW_ONLY, SUGGEST, FULL_ACCESS
+- `expiresAt` (DateTime, Optional) - Time-limited sharing
+
+**Use Cases:**
+1. **Share with Friends**: Get feedback on specific outfits without sharing entire wardrobe
+2. **Share with Stylist**: User can share pre-created outfits with stylist during session
+3. **Privacy Control**: More granular than wardrobe sharing - only share selected outfits
+
+**Permission Levels:**
+- **VIEW_ONLY**: Friend/stylist can only view the outfit
+- **SUGGEST**: Can view + suggest modifications
+- **FULL_ACCESS**: Can view + edit the outfit
+
+**Unique Constraint:** `[outfitId, sharedWithId]` - Same outfit can't be shared twice with same user
+
+**Example Usage:**
+```json
+{
+  "outfitId": "uuid-1",
+  "ownerId": "user-1",
+  "sharedWithId": "stylist-1",
+  "permission": "SUGGEST",
+  "expiresAt": "2025-11-20T00:00:00Z"
+}
+```
+
+---
+
 ### 💼 Stylist Marketplace Domain
 
 #### **StylingRequest**
@@ -258,19 +297,67 @@ User requests for styling help.
 - `userId` (UUID)
 - `occasion` (String) - e.g., "Wedding", "Party"
 - `timeline` (RequestTimeline) - URGENT, WITHIN_WEEK, FLEXIBLE
+- `requestType` (RequestType) - **NEW**: IMMEDIATE or SCHEDULED
+- `scheduledStartTime` (DateTime, Optional) - **NEW**: For scheduled appointments
+- `scheduledEndTime` (DateTime, Optional) - **NEW**: For scheduled appointments
 - `preferredStyles` (String[])
 - `budget` (Float, Optional)
 - `status` (RequestStatus) - PENDING, MATCHED, COMPLETED, CANCELLED, EXPIRED
 - `matchedStylistId` (UUID, Optional)
-- `expiresAt` (DateTime, Optional) - For race mode (5 min expiry)
+- `expiresAt` (DateTime, Optional) - For IMMEDIATE requests race mode (5 min expiry)
+
+**Request Types:**
+
+1. **IMMEDIATE** (Default - Race Mode):
+   - User needs styling help right now
+   - Request broadcast to available stylists
+   - First stylist to accept gets the session
+   - Expires in 5 minutes if no one accepts
+   - `expiresAt` field is used
+
+2. **SCHEDULED** (Appointment-Based):
+   - User books stylist for specific time slot (e.g., "Tomorrow 1-4 PM")
+   - `scheduledStartTime` and `scheduledEndTime` are required
+   - No race mode - user can browse stylists and request specific one
+   - Stylist can accept/decline based on availability
+   - No auto-expiry - waits for stylist response
 
 **Lifecycle:**
+
+*IMMEDIATE Request:*
 ```
-PENDING → MATCHED → (Session Created) → COMPLETED
+PENDING → (5 min race mode) → MATCHED → (Session Created) → COMPLETED
    ↓
 EXPIRED (if no stylist accepts within 5 minutes)
    ↓
 CANCELLED (user cancels)
+```
+
+*SCHEDULED Request:*
+```
+PENDING → (Stylist views & accepts) → MATCHED → (Session at scheduled time) → COMPLETED
+   ↓
+CANCELLED (user or stylist cancels)
+```
+
+**Example Usage:**
+```json
+// Immediate Request
+{
+  "requestType": "IMMEDIATE",
+  "occasion": "Date Night",
+  "timeline": "URGENT",
+  "expiresAt": "2025-11-13T10:05:00Z"
+}
+
+// Scheduled Request
+{
+  "requestType": "SCHEDULED",
+  "occasion": "Wedding Next Week",
+  "timeline": "WITHIN_WEEK",
+  "scheduledStartTime": "2025-11-15T13:00:00Z",
+  "scheduledEndTime": "2025-11-15T16:00:00Z"
+}
 ```
 
 ---
@@ -529,6 +616,20 @@ enum RequestTimeline {
 }
 ```
 
+### RequestType
+**NEW**: Determines how styling requests are matched.
+
+```prisma
+enum RequestType {
+  IMMEDIATE  // Race mode - first stylist to accept wins
+  SCHEDULED  // Appointment-based - book for specific time slot
+}
+```
+
+**Usage:**
+- **IMMEDIATE**: User needs styling help right now. Request sent to multiple stylists, first to accept gets the session. Auto-expires in 5 minutes if no one accepts.
+- **SCHEDULED**: User books stylist for later (e.g., "Tomorrow 1-4 PM"). Stylist can view and accept based on availability. No race mode or auto-expiry.
+
 ---
 
 ## 4️⃣ RELATIONSHIPS & DIAGRAMS
@@ -554,6 +655,7 @@ ClothingItem (Many) ─ (Many) Outfit (via OutfitItem junction)
 
 Outfit (1) ──────── (Many) OutfitCalendarEntry
 Outfit (1) ──────── (Many) OutfitSuggestion
+Outfit (1) ──────── (Many) OutfitShare [NEW]
 
 StylingRequest (1) ─ (1) StylingSession
 StylingSession (1) ─ (Many) Message
@@ -600,8 +702,9 @@ All foreign keys are automatically indexed for join performance.
 ```prisma
 @@index([wardrobeId])
 @@index([categoryId])
-@@index([season])   // For seasonal filtering
-@@index([status])   // For filtering available items
+@@index([season])     // For seasonal filtering
+@@index([status])     // For filtering available items
+@@index([isPrivate])  // [NEW] For filtering private items when sharing
 ```
 
 #### Outfit Model
@@ -622,6 +725,15 @@ All foreign keys are automatically indexed for join performance.
 ```prisma
 @@index([stylistId])  // For fetching stylist reviews
 @@index([rating])     // For filtering by rating
+```
+
+#### StylingRequest Model
+```prisma
+@@index([userId])
+@@index([status])
+@@index([matchedStylistId])
+@@index([requestType])          // [NEW] For filtering by request type
+@@index([scheduledStartTime])   // [NEW] For querying scheduled appointments
 ```
 
 #### Payment Model
@@ -754,11 +866,17 @@ Create `prisma/seed.ts` for development data:
 
 ## 📊 DATABASE STATISTICS
 
-**Total Models:** 20
-**Total Enums:** 10
-**Total Relations:** 50+
-**Total Indexes:** 35+
+**Total Models:** 21 (added OutfitShare)
+**Total Enums:** 11 (added RequestType)
+**Total Relations:** 52+
+**Total Indexes:** 38+
 **Average Model Size:** 8-12 fields
+
+### Recent Additions (v1.1)
+- **OutfitShare Model**: Share individual outfits with friends/stylists
+- **RequestType Enum**: Support both immediate (race mode) and scheduled appointments
+- **Privacy Controls**: `isPrivate` field on ClothingItem for privacy when sharing wardrobes
+- **Scheduled Sessions**: `scheduledStartTime` and `scheduledEndTime` on StylingRequest
 
 ---
 

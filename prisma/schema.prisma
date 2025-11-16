@@ -121,6 +121,15 @@ enum NotificationType {
   OUTFIT_SUGGESTION
   STYLIST_APPROVED
   STYLIST_REJECTED
+  FRIEND_REQUEST_RECEIVED
+  FRIEND_REQUEST_ACCEPTED
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
 }
 
 // ============================================
@@ -190,8 +199,37 @@ model UserProfile {
   payments                Payment[]
   sentMessages            Message[]
 
+  // Friendships
+  sentFriendRequests      Friendship[] @relation("SentFriendRequests")
+  receivedFriendRequests  Friendship[] @relation("ReceivedFriendRequests")
+
   @@index([authAccountId])
   @@map("user_profiles")
+}
+
+model Friendship {
+  id                String            @id @default(uuid())
+
+  // The two users in the friendship
+  requesterId       String            // User who sent request
+  requester         UserProfile       @relation("SentFriendRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  addresseeId       String            // User who received request
+  addressee         UserProfile       @relation("ReceivedFriendRequests", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  status            FriendshipStatus  @default(PENDING)
+
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  acceptedAt        DateTime?         // When friendship was accepted
+  updatedAt         DateTime          @updatedAt
+
+  // Ensure no duplicate friendships
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@index([status])
+  @@map("friendships")
 }
 
 model StylistProfile {

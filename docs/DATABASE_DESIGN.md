@@ -26,306 +26,24 @@
 
 ```mermaid
 erDiagram
-    %% ========================================
-    %% DOMAIN 1: USER MANAGEMENT
-    %% ========================================
-
-    User {
-        uuid id PK
-        string email UK
-        string password
-        string name
-        string phone
-        string bio
-        string avatar
-        enum role
-        boolean emailVerified
-        string emailVerificationToken
-        string passwordResetToken
-        datetime passwordResetExpires
-        string googleId UK
-        string appleId UK
-        int freeSessions
-        boolean isActive
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    StylistProfile {
-        uuid id PK
-        uuid userId FK_UK
-        string bio
-        int yearsOfExperience
-        float pricePerSession
-        array languages
-        array expertise
-        array portfolioImages
-        boolean isAvailable
-        boolean isVerified
-        int totalSessions
-        float totalEarnings
-        float averageRating
-        int totalReviews
-        float walletBalance
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    FCMToken {
-        uuid id PK
-        uuid userId FK
-        string token UK
-        string deviceId
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Notification {
-        uuid id PK
-        uuid userId FK
-        enum type
-        string title
-        string message
-        json data
-        boolean isRead
-        datetime createdAt
-    }
-
-    %% ========================================
-    %% DOMAIN 2: WARDROBE SYSTEM
-    %% ========================================
-
-    Wardrobe {
-        uuid id PK
-        uuid userId FK
-        string name
-        string location
-        string description
-        boolean isDefault
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Category {
-        uuid id PK
-        uuid wardrobeId FK
-        string name
-        uuid parentId FK
-        int order
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    ClothingItem {
-        uuid id PK
-        uuid wardrobeId FK
-        uuid categoryId FK
-        string name
-        string itemType
-        string color
-        enum season
-        string brand
-        string notes
-        datetime purchaseDate
-        float price
-        enum status
-        boolean isPrivate
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    ClothingImage {
-        uuid id PK
-        uuid itemId FK
-        string url
-        int order
-        datetime createdAt
-    }
-
-    WardrobeShare {
-        uuid id PK
-        uuid wardrobeId FK
-        uuid ownerId FK
-        uuid sharedWithId FK
-        enum permission
-        datetime expiresAt
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    %% ========================================
-    %% DOMAIN 3: OUTFIT MANAGEMENT
-    %% ========================================
-
-    Outfit {
-        uuid id PK
-        uuid userId FK
-        string name
-        string description
-        enum season
-        string occasion
-        array tags
-        boolean isFavorite
-        string previewImage
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    OutfitItem {
-        uuid id PK
-        uuid outfitId FK
-        uuid itemId FK
-        int order
-        datetime createdAt
-    }
-
-    OutfitCalendarEntry {
-        uuid id PK
-        uuid outfitId FK
-        uuid userId FK
-        datetime scheduledDate UK
-        string notes
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    OutfitShare {
-        uuid id PK
-        uuid outfitId FK
-        uuid ownerId FK
-        uuid sharedWithId FK
-        enum permission
-        datetime expiresAt
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    OutfitSuggestion {
-        uuid id PK
-        uuid wardrobeId FK
-        uuid outfitId FK
-        uuid suggestedById FK
-        boolean isAccepted
-        string comment
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    %% ========================================
-    %% DOMAIN 4: STYLIST MARKETPLACE
-    %% ========================================
-
-    StylingRequest {
-        uuid id PK
-        uuid userId FK
-        string occasion
-        enum timeline
-        enum requestType
-        datetime scheduledStartTime
-        datetime scheduledEndTime
-        array preferredStyles
-        float budget
-        string notes
-        enum status
-        uuid matchedStylistId
-        datetime expiresAt
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    StylingSession {
-        uuid id PK
-        uuid requestId FK_UK
-        uuid userId FK
-        uuid stylistId FK
-        enum status
-        datetime startedAt
-        datetime endedAt
-        boolean isFreeSession
-        float amountCharged
-        float platformFee
-        float stylistEarning
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Message {
-        uuid id PK
-        uuid sessionId FK
-        uuid senderId FK
-        string content
-        array images
-        boolean isRead
-        datetime createdAt
-    }
-
-    Review {
-        uuid id PK
-        uuid sessionId FK_UK
-        uuid userId FK
-        uuid stylistId FK
-        int rating
-        string comment
-        boolean isFlagged
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    %% ========================================
-    %% DOMAIN 5: PAYMENTS
-    %% ========================================
-
-    Payment {
-        uuid id PK
-        uuid sessionId FK_UK
-        uuid userId FK
-        float amount
-        float platformFee
-        float stylistEarning
-        string razorpayOrderId UK
-        string razorpayPaymentId UK
-        string razorpaySignature
-        enum status
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Transaction {
-        uuid id PK
-        uuid stylistProfileId FK
-        enum type
-        float amount
-        string description
-        float balanceBefore
-        float balanceAfter
-        datetime createdAt
-    }
-
-    Withdrawal {
-        uuid id PK
-        uuid stylistProfileId FK
-        float amount
-        string bankAccountNumber
-        string ifscCode
-        string accountHolderName
-        enum status
-        datetime processedAt
-        string failureReason
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    %% ========================================
-    %% RELATIONSHIPS
-    %% ========================================
-
-    %% User Domain Relationships
     User ||--o| StylistProfile : "may have"
     User ||--o{ FCMToken : "has many"
     User ||--o{ Notification : "receives"
-
-    %% Wardrobe Domain Relationships
     User ||--o{ Wardrobe : "owns"
+    User ||--o{ Outfit : "creates"
+    User ||--o{ StylingRequest : "makes requests"
+    User ||--o{ StylingSession : "client sessions"
+    User ||--o{ StylingSession : "stylist sessions"
+    User ||--o{ Message : "sends"
+    User ||--o{ Review : "gives/receives"
+    User ||--o{ Payment : "makes payments"
+    User ||--o{ WardrobeShare : "shares/receives wardrobes"
+    User ||--o{ OutfitShare : "shares/receives outfits"
+    User ||--o{ OutfitSuggestion : "suggests outfits"
+
+    StylistProfile ||--o{ Transaction : "has transactions"
+    StylistProfile ||--o{ Withdrawal : "requests withdrawals"
+
     Wardrobe ||--o{ Category : "has"
     Wardrobe ||--o{ ClothingItem : "contains"
     Wardrobe ||--o{ WardrobeShare : "shared via"
@@ -337,36 +55,285 @@ erDiagram
     ClothingItem ||--o{ ClothingImage : "has images"
     ClothingItem ||--o{ OutfitItem : "used in outfits"
 
-    %% Outfit Domain Relationships
-    User ||--o{ Outfit : "creates"
     Outfit ||--o{ OutfitItem : "contains items"
     Outfit ||--o{ OutfitCalendarEntry : "scheduled in"
     Outfit ||--o{ OutfitShare : "shared via"
     Outfit ||--o{ OutfitSuggestion : "suggested as"
 
-    %% Sharing Relationships
-    User ||--o{ WardrobeShare : "shares/receives wardrobes"
-    User ||--o{ OutfitShare : "shares/receives outfits"
-    User ||--o{ OutfitSuggestion : "suggests outfits"
-
-    %% Stylist Marketplace Relationships
-    User ||--o{ StylingRequest : "makes requests"
     StylingRequest ||--|| StylingSession : "creates session"
-
-    User ||--o{ StylingSession : "client sessions"
-    User ||--o{ StylingSession : "stylist sessions"
 
     StylingSession ||--o{ Message : "has messages"
     StylingSession ||--o| Review : "gets review"
     StylingSession ||--o| Payment : "requires payment"
 
-    User ||--o{ Message : "sends"
-    User ||--o{ Review : "gives/receives"
+    User {
+        string id "PK, UUID"
+        string email "Unique, Required"
+        string password "Nullable"
+        string name "Required"
+        string phone "Nullable"
+        string bio "Nullable"
+        string avatar "Nullable"
+        string role "USER or STYLIST"
+        boolean emailVerified "Default false"
+        string emailVerificationToken "Nullable"
+        string passwordResetToken "Nullable"
+        datetime passwordResetExpires "Nullable"
+        string googleId "Unique, Nullable"
+        string appleId "Unique, Nullable"
+        int freeSessions "Default 3"
+        boolean isActive "Default true"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
 
-    %% Payment Domain Relationships
-    User ||--o{ Payment : "makes payments"
-    StylistProfile ||--o{ Transaction : "has transactions"
-    StylistProfile ||--o{ Withdrawal : "requests withdrawals"
+    StylistProfile {
+        string id "PK, UUID"
+        string userId "FK to User, Unique"
+        string bio "Required"
+        int yearsOfExperience "Required"
+        float pricePerSession "Required"
+        string[] languages "Array"
+        string[] expertise "Array"
+        string[] portfolioImages "Array"
+        boolean isAvailable "Default true"
+        boolean isVerified "Default true"
+        int totalSessions "Default 0"
+        float totalEarnings "Default 0"
+        float averageRating "Default 0"
+        int totalReviews "Default 0"
+        float walletBalance "Default 0"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    FCMToken {
+        string id "PK, UUID"
+        string userId "FK to User"
+        string token "Unique"
+        string deviceId "Nullable"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    Notification {
+        string id "PK, UUID"
+        string userId "FK to User"
+        string type "Enum NotificationType"
+        string title "Required"
+        string message "Required"
+        json data "Nullable"
+        boolean isRead "Default false"
+        datetime createdAt "Auto"
+    }
+
+    Wardrobe {
+        string id "PK, UUID"
+        string userId "FK to User"
+        string name "Required"
+        string location "Nullable"
+        string description "Nullable"
+        boolean isDefault "Default false"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    Category {
+        string id "PK, UUID"
+        string wardrobeId "FK to Wardrobe"
+        string name "Required"
+        string parentId "FK to Category, Nullable"
+        int order "Default 0"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    ClothingItem {
+        string id "PK, UUID"
+        string wardrobeId "FK to Wardrobe"
+        string categoryId "FK to Category, Nullable"
+        string name "Required"
+        string itemType "Required"
+        string color "Nullable"
+        string season "Enum Season"
+        string brand "Nullable"
+        string notes "Nullable"
+        datetime purchaseDate "Nullable"
+        float price "Nullable"
+        string status "Enum ItemStatus"
+        boolean isPrivate "Default false"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    ClothingImage {
+        string id "PK, UUID"
+        string itemId "FK to ClothingItem"
+        string url "Required"
+        int order "Default 0"
+        datetime createdAt "Auto"
+    }
+
+    WardrobeShare {
+        string id "PK, UUID"
+        string wardrobeId "FK to Wardrobe"
+        string ownerId "FK to User"
+        string sharedWithId "FK to User"
+        string permission "Enum SharePermission"
+        datetime expiresAt "Nullable"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    Outfit {
+        string id "PK, UUID"
+        string userId "FK to User"
+        string name "Required"
+        string description "Nullable"
+        string season "Enum Season, Nullable"
+        string occasion "Nullable"
+        string[] tags "Array"
+        boolean isFavorite "Default false"
+        string previewImage "Nullable"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    OutfitItem {
+        string id "PK, UUID"
+        string outfitId "FK to Outfit"
+        string itemId "FK to ClothingItem"
+        int order "Default 0"
+        datetime createdAt "Auto"
+    }
+
+    OutfitCalendarEntry {
+        string id "PK, UUID"
+        string outfitId "FK to Outfit"
+        string userId "FK to User"
+        datetime scheduledDate "Unique with userId"
+        string notes "Nullable"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    OutfitShare {
+        string id "PK, UUID"
+        string outfitId "FK to Outfit"
+        string ownerId "FK to User"
+        string sharedWithId "FK to User"
+        string permission "Enum SharePermission"
+        datetime expiresAt "Nullable"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    OutfitSuggestion {
+        string id "PK, UUID"
+        string wardrobeId "FK to Wardrobe"
+        string outfitId "FK to Outfit, Nullable"
+        string suggestedById "FK to User"
+        boolean isAccepted "Nullable"
+        string comment "Nullable"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    StylingRequest {
+        string id "PK, UUID"
+        string userId "FK to User"
+        string occasion "Required"
+        string timeline "Enum RequestTimeline"
+        string requestType "Enum RequestType"
+        datetime scheduledStartTime "Nullable"
+        datetime scheduledEndTime "Nullable"
+        string[] preferredStyles "Array"
+        float budget "Nullable"
+        string notes "Nullable"
+        string status "Enum RequestStatus"
+        string matchedStylistId "Nullable"
+        datetime expiresAt "Nullable"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    StylingSession {
+        string id "PK, UUID"
+        string requestId "FK to StylingRequest, Unique"
+        string userId "FK to User"
+        string stylistId "FK to User"
+        string status "Enum SessionStatus"
+        datetime startedAt "Default now"
+        datetime endedAt "Nullable"
+        boolean isFreeSession "Default false"
+        float amountCharged "Nullable"
+        float platformFee "Nullable"
+        float stylistEarning "Nullable"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    Message {
+        string id "PK, UUID"
+        string sessionId "FK to StylingSession"
+        string senderId "FK to User"
+        string content "Required"
+        string[] images "Array"
+        boolean isRead "Default false"
+        datetime createdAt "Auto"
+    }
+
+    Review {
+        string id "PK, UUID"
+        string sessionId "FK to StylingSession, Unique"
+        string userId "FK to User"
+        string stylistId "FK to User"
+        int rating "1-5 stars"
+        string comment "Nullable"
+        boolean isFlagged "Default false"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    Payment {
+        string id "PK, UUID"
+        string sessionId "FK to StylingSession, Unique"
+        string userId "FK to User"
+        float amount "Required"
+        float platformFee "Required"
+        float stylistEarning "Required"
+        string razorpayOrderId "Unique"
+        string razorpayPaymentId "Unique, Nullable"
+        string razorpaySignature "Nullable"
+        string status "Enum PaymentStatus"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
+
+    Transaction {
+        string id "PK, UUID"
+        string stylistProfileId "FK to StylistProfile"
+        string type "Enum TransactionType"
+        float amount "Required"
+        string description "Required"
+        float balanceBefore "Required"
+        float balanceAfter "Required"
+        datetime createdAt "Auto"
+    }
+
+    Withdrawal {
+        string id "PK, UUID"
+        string stylistProfileId "FK to StylistProfile"
+        float amount "Min 500"
+        string bankAccountNumber "Required"
+        string ifscCode "Required"
+        string accountHolderName "Required"
+        string status "Enum WithdrawalStatus"
+        datetime processedAt "Nullable"
+        string failureReason "Nullable"
+        datetime createdAt "Auto"
+        datetime updatedAt "Auto"
+    }
 ```
 
 ---

@@ -132,6 +132,11 @@ enum FriendshipStatus {
   BLOCKED
 }
 
+enum CategoryType {
+  CLOTHING  // For organizing clothing items in wardrobes
+  OUTFIT    // For organizing outfits by occasion/purpose
+}
+
 // ============================================
 // DOMAIN 0: AUTHENTICATION & ADMIN
 // ============================================
@@ -187,6 +192,7 @@ model UserProfile {
 
   // Relationships
   wardrobes               Wardrobe[]
+  categories              Category[]
   outfits                 Outfit[]
   stylingRequests         StylingRequest[]
   stylingSessions         StylingSession[] @relation("ClientSessions")
@@ -417,8 +423,14 @@ model Wardrobe {
 
 model Category {
   id                      String            @id @default(uuid())
-  wardrobeId              String
-  wardrobe                Wardrobe          @relation(fields: [wardrobeId], references: [id], onDelete: Cascade)
+  userId                  String            // All categories belong to user
+  user                    UserProfile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type                    CategoryType      // CLOTHING or OUTFIT
+
+  // For CLOTHING type: which wardrobe?
+  wardrobeId              String?           // Nullable (only for CLOTHING type)
+  wardrobe                Wardrobe?         @relation(fields: [wardrobeId], references: [id], onDelete: Cascade)
 
   name                    String
   parentId                String?
@@ -429,9 +441,12 @@ model Category {
   createdAt               DateTime          @default(now())
   updatedAt               DateTime          @updatedAt
 
-  // Relationships
-  items                   ClothingItem[]
+  // Relationships - both clothing items and outfits can use categories
+  clothingItems           ClothingItem[]
+  outfits                 Outfit[]
 
+  @@index([userId])
+  @@index([type])
   @@index([wardrobeId])
   @@index([parentId])
   @@map("categories")
@@ -443,7 +458,7 @@ model ClothingItem {
   wardrobe                Wardrobe          @relation(fields: [wardrobeId], references: [id], onDelete: Cascade)
 
   categoryId              String?
-  category                Category?         @relation(fields: [categoryId], references: [id])
+  category                Category?         @relation("clothingItems", fields: [categoryId], references: [id])
 
   name                    String
   itemType                String
@@ -515,6 +530,9 @@ model Outfit {
   userId                  String
   user                    UserProfile           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  categoryId              String?
+  category                Category?             @relation("outfits", fields: [categoryId], references: [id])
+
   name                    String
   description             String?
   season                  Season?
@@ -533,6 +551,7 @@ model Outfit {
   suggestions             OutfitSuggestion[]
 
   @@index([userId])
+  @@index([categoryId])
   @@index([season])
   @@index([isFavorite])
   @@map("outfits")

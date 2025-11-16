@@ -131,12 +131,20 @@ model AuthAccount {
   id                      String    @id @default(uuid())
   email                   String    @unique
   password                String?   // Nullable for OAuth users
+
+  // Google OAuth & API Access
   googleId                String?   @unique
-  appleId                 String?   @unique
+  googleAccessToken       String?   // For calling Google APIs (Calendar, etc.)
+  googleRefreshToken      String?   // To refresh access tokens
+  googleTokenExpiry       DateTime? // When access token expires
+  googleScope             String?   // Granted permissions (e.g., "calendar.readonly")
+
+  // Email verification & password reset
   emailVerified           Boolean   @default(false)
   emailVerificationToken  String?
   passwordResetToken      String?
   passwordResetExpires    DateTime?
+
   isActive                Boolean   @default(true)
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
@@ -150,7 +158,6 @@ model AuthAccount {
 
   @@index([email])
   @@index([googleId])
-  @@index([appleId])
   @@map("auth_accounts")
 }
 
@@ -519,12 +526,18 @@ model OutfitCalendarEntry {
   scheduledDate           DateTime
   notes                   String?
 
+  // Google Calendar Integration
+  googleEventId           String?           // Google Calendar event ID for sync
+  syncedToGoogle          Boolean           @default(false)
+  lastSyncedAt            DateTime?
+
   createdAt               DateTime          @default(now())
   updatedAt               DateTime          @updatedAt
 
   @@unique([userId, scheduledDate])
   @@index([userId])
   @@index([scheduledDate])
+  @@index([googleEventId])
   @@map("outfit_calendar_entries")
 }
 

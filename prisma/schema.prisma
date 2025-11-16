@@ -442,8 +442,8 @@ model Category {
   updatedAt               DateTime          @updatedAt
 
   // Relationships - both clothing items and outfits can use categories
-  clothingItems           ClothingItem[]
-  outfits                 Outfit[]
+  clothingItems           ClothingItem[]    @relation("clothingItems")
+  outfits                 Outfit[]          @relation("outfits")
 
   @@index([userId])
   @@index([type])

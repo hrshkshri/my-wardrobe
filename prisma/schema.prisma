@@ -243,14 +243,8 @@ model StylistProfile {
   authAccountId           String          @unique
   authAccount             AuthAccount     @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
 
-  // Approval Status
+  // Approval Status (current state only, full history in StylistApprovalLog)
   profileStatus           ProfileStatus   @default(PENDING_APPROVAL)
-  rejectionReason         String?
-  approvedAt              DateTime?
-  approvedBy              String?         // AdminProfile ID
-  rejectedAt              DateTime?
-  suspendedAt             DateTime?
-  suspensionReason        String?
 
   // Professional Info
   yearsOfExperience       Int

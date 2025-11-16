@@ -22,56 +22,351 @@
 
 ## 1️⃣ COMPLETE ENTITY RELATIONSHIP DIAGRAM
 
-### High-Level Overview
+### Complete Schema with All Models and Fields
 
 ```mermaid
 erDiagram
-    %% USER DOMAIN
+    %% ========================================
+    %% DOMAIN 1: USER MANAGEMENT
+    %% ========================================
+
+    User {
+        uuid id PK
+        string email UK
+        string password
+        string name
+        string phone
+        string bio
+        string avatar
+        enum role
+        boolean emailVerified
+        string emailVerificationToken
+        string passwordResetToken
+        datetime passwordResetExpires
+        string googleId UK
+        string appleId UK
+        int freeSessions
+        boolean isActive
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    StylistProfile {
+        uuid id PK
+        uuid userId FK_UK
+        string bio
+        int yearsOfExperience
+        float pricePerSession
+        array languages
+        array expertise
+        array portfolioImages
+        boolean isAvailable
+        boolean isVerified
+        int totalSessions
+        float totalEarnings
+        float averageRating
+        int totalReviews
+        float walletBalance
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    FCMToken {
+        uuid id PK
+        uuid userId FK
+        string token UK
+        string deviceId
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Notification {
+        uuid id PK
+        uuid userId FK
+        enum type
+        string title
+        string message
+        json data
+        boolean isRead
+        datetime createdAt
+    }
+
+    %% ========================================
+    %% DOMAIN 2: WARDROBE SYSTEM
+    %% ========================================
+
+    Wardrobe {
+        uuid id PK
+        uuid userId FK
+        string name
+        string location
+        string description
+        boolean isDefault
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Category {
+        uuid id PK
+        uuid wardrobeId FK
+        string name
+        uuid parentId FK
+        int order
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ClothingItem {
+        uuid id PK
+        uuid wardrobeId FK
+        uuid categoryId FK
+        string name
+        string itemType
+        string color
+        enum season
+        string brand
+        string notes
+        datetime purchaseDate
+        float price
+        enum status
+        boolean isPrivate
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ClothingImage {
+        uuid id PK
+        uuid itemId FK
+        string url
+        int order
+        datetime createdAt
+    }
+
+    WardrobeShare {
+        uuid id PK
+        uuid wardrobeId FK
+        uuid ownerId FK
+        uuid sharedWithId FK
+        enum permission
+        datetime expiresAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    %% ========================================
+    %% DOMAIN 3: OUTFIT MANAGEMENT
+    %% ========================================
+
+    Outfit {
+        uuid id PK
+        uuid userId FK
+        string name
+        string description
+        enum season
+        string occasion
+        array tags
+        boolean isFavorite
+        string previewImage
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    OutfitItem {
+        uuid id PK
+        uuid outfitId FK
+        uuid itemId FK
+        int order
+        datetime createdAt
+    }
+
+    OutfitCalendarEntry {
+        uuid id PK
+        uuid outfitId FK
+        uuid userId FK
+        datetime scheduledDate UK
+        string notes
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    OutfitShare {
+        uuid id PK
+        uuid outfitId FK
+        uuid ownerId FK
+        uuid sharedWithId FK
+        enum permission
+        datetime expiresAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    OutfitSuggestion {
+        uuid id PK
+        uuid wardrobeId FK
+        uuid outfitId FK
+        uuid suggestedById FK
+        boolean isAccepted
+        string comment
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    %% ========================================
+    %% DOMAIN 4: STYLIST MARKETPLACE
+    %% ========================================
+
+    StylingRequest {
+        uuid id PK
+        uuid userId FK
+        string occasion
+        enum timeline
+        enum requestType
+        datetime scheduledStartTime
+        datetime scheduledEndTime
+        array preferredStyles
+        float budget
+        string notes
+        enum status
+        uuid matchedStylistId
+        datetime expiresAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    StylingSession {
+        uuid id PK
+        uuid requestId FK_UK
+        uuid userId FK
+        uuid stylistId FK
+        enum status
+        datetime startedAt
+        datetime endedAt
+        boolean isFreeSession
+        float amountCharged
+        float platformFee
+        float stylistEarning
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Message {
+        uuid id PK
+        uuid sessionId FK
+        uuid senderId FK
+        string content
+        array images
+        boolean isRead
+        datetime createdAt
+    }
+
+    Review {
+        uuid id PK
+        uuid sessionId FK_UK
+        uuid userId FK
+        uuid stylistId FK
+        int rating
+        string comment
+        boolean isFlagged
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    %% ========================================
+    %% DOMAIN 5: PAYMENTS
+    %% ========================================
+
+    Payment {
+        uuid id PK
+        uuid sessionId FK_UK
+        uuid userId FK
+        float amount
+        float platformFee
+        float stylistEarning
+        string razorpayOrderId UK
+        string razorpayPaymentId UK
+        string razorpaySignature
+        enum status
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Transaction {
+        uuid id PK
+        uuid stylistProfileId FK
+        enum type
+        float amount
+        string description
+        float balanceBefore
+        float balanceAfter
+        datetime createdAt
+    }
+
+    Withdrawal {
+        uuid id PK
+        uuid stylistProfileId FK
+        float amount
+        string bankAccountNumber
+        string ifscCode
+        string accountHolderName
+        enum status
+        datetime processedAt
+        string failureReason
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    %% ========================================
+    %% RELATIONSHIPS
+    %% ========================================
+
+    %% User Domain Relationships
     User ||--o| StylistProfile : "may have"
     User ||--o{ FCMToken : "has many"
-    User ||--o{ Wardrobe : "owns"
-    User ||--o{ Outfit : "creates"
-    User ||--o{ StylingRequest : "makes"
-    User ||--o{ Payment : "makes"
     User ||--o{ Notification : "receives"
 
-    %% STYLIST DOMAIN
-    StylistProfile ||--o{ Transaction : "has"
-    StylistProfile ||--o{ Withdrawal : "requests"
-
-    %% WARDROBE DOMAIN
+    %% Wardrobe Domain Relationships
+    User ||--o{ Wardrobe : "owns"
     Wardrobe ||--o{ Category : "has"
     Wardrobe ||--o{ ClothingItem : "contains"
     Wardrobe ||--o{ WardrobeShare : "shared via"
-    Wardrobe ||--o{ OutfitSuggestion : "receives"
+    Wardrobe ||--o{ OutfitSuggestion : "receives suggestions"
 
     Category ||--o{ Category : "parent-child"
     Category ||--o{ ClothingItem : "categorizes"
 
-    ClothingItem ||--o{ ClothingImage : "has"
-    ClothingItem ||--o{ OutfitItem : "used in"
+    ClothingItem ||--o{ ClothingImage : "has images"
+    ClothingItem ||--o{ OutfitItem : "used in outfits"
 
-    %% OUTFIT DOMAIN
-    Outfit ||--o{ OutfitItem : "contains"
+    %% Outfit Domain Relationships
+    User ||--o{ Outfit : "creates"
+    Outfit ||--o{ OutfitItem : "contains items"
     Outfit ||--o{ OutfitCalendarEntry : "scheduled in"
     Outfit ||--o{ OutfitShare : "shared via"
     Outfit ||--o{ OutfitSuggestion : "suggested as"
 
-    %% SHARING DOMAIN
-    User ||--o{ WardrobeShare : "shares/receives"
-    User ||--o{ OutfitShare : "shares/receives"
-    User ||--o{ OutfitSuggestion : "suggests"
+    %% Sharing Relationships
+    User ||--o{ WardrobeShare : "shares/receives wardrobes"
+    User ||--o{ OutfitShare : "shares/receives outfits"
+    User ||--o{ OutfitSuggestion : "suggests outfits"
 
-    %% STYLIST MARKETPLACE DOMAIN
-    StylingRequest ||--|| StylingSession : "creates"
-    StylingSession ||--o{ Message : "has"
-    StylingSession ||--o| Review : "gets"
-    StylingSession ||--o| Payment : "requires"
+    %% Stylist Marketplace Relationships
+    User ||--o{ StylingRequest : "makes requests"
+    StylingRequest ||--|| StylingSession : "creates session"
 
-    User ||--o{ StylingSession : "user sessions"
+    User ||--o{ StylingSession : "client sessions"
     User ||--o{ StylingSession : "stylist sessions"
+
+    StylingSession ||--o{ Message : "has messages"
+    StylingSession ||--o| Review : "gets review"
+    StylingSession ||--o| Payment : "requires payment"
+
     User ||--o{ Message : "sends"
     User ||--o{ Review : "gives/receives"
+
+    %% Payment Domain Relationships
+    User ||--o{ Payment : "makes payments"
+    StylistProfile ||--o{ Transaction : "has transactions"
+    StylistProfile ||--o{ Withdrawal : "requests withdrawals"
 ```
 
 ---

@@ -1,9 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// This is your Prisma schema file for VYBE (Fashion OS + Stylist Marketplace)
+// Schema Version: V2 (Role-based with Admin & Approval System)
+// Database: PostgreSQL (via Supabase)
+// Last Updated: 2025-11-16
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -11,12 +12,800 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Note {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ============================================
+// ENUMERATIONS
+// ============================================
 
-  @@map("notes")
+enum ProfileStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  MODERATOR
+}
+
+enum UpgradeStatus {
+  SUBMITTED
+  REVIEWING
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalAction {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  SUSPENDED
+  UNSUSPENDED
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+  ALL_SEASON
+}
+
+enum ItemStatus {
+  AVAILABLE
+  IN_LAUNDRY
+  IN_REPAIR
+  DONATED
+  SOLD
+}
+
+enum SharePermission {
+  VIEW_ONLY
+  SUGGEST
+  FULL_ACCESS
+}
+
+enum RequestTimeline {
+  URGENT
+  WITHIN_WEEK
+  FLEXIBLE
+}
+
+enum RequestType {
+  IMMEDIATE
+  SCHEDULED
+}
+
+enum RequestStatus {
+  PENDING
+  MATCHED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TransactionType {
+  EARNING
+  WITHDRAWAL
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum NotificationType {
+  STYLING_REQUEST
+  STYLIST_MATCHED
+  NEW_MESSAGE
+  SESSION_ENDED
+  PAYMENT_RECEIVED
+  REVIEW_RECEIVED
+  WARDROBE_SHARED
+  OUTFIT_SUGGESTION
+  STYLIST_APPROVED
+  STYLIST_REJECTED
+  FRIEND_REQUEST_RECEIVED
+  FRIEND_REQUEST_ACCEPTED
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+}
+
+enum CategoryType {
+  CLOTHING  // For organizing clothing items in wardrobes
+  OUTFIT    // For organizing outfits by occasion/purpose
+}
+
+// ============================================
+// DOMAIN 0: AUTHENTICATION & ADMIN
+// ============================================
+
+model AuthAccount {
+  id                      String    @id @default(uuid())
+  email                   String    @unique
+  password                String?   // Nullable for OAuth users
+
+  // Google OAuth & API Access
+  googleId                String?   @unique
+  googleAccessToken       String?   // For calling Google APIs (Calendar, etc.)
+  googleRefreshToken      String?   // To refresh access tokens
+  googleTokenExpiry       DateTime? // When access token expires
+  googleScope             String?   // Granted permissions (e.g., "calendar.readonly")
+
+  // Email verification & password reset
+  emailVerified           Boolean   @default(false)
+  emailVerificationToken  String?
+  passwordResetToken      String?
+  passwordResetExpires    DateTime?
+
+  isActive                Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  // Relationships (one account can have one of each profile type)
+  userProfile             UserProfile?
+  stylistProfile          StylistProfile?
+  adminProfile            AdminProfile?
+  fcmTokens               FCMToken[]
+  upgradeRequests         UpgradeRequest[]
+
+  @@index([email])
+  @@index([googleId])
+  @@map("auth_accounts")
+}
+
+model UserProfile {
+  id                      String    @id @default(uuid())
+  authAccountId           String    @unique
+  authAccount             AuthAccount @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
+
+  firstName               String
+  lastName                String
+  phone                   String?
+  bio                     String?
+  avatar                  String?
+  totalFreeSessions       Int       @default(3)
+  remainingFreeSessions   Int       @default(3)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  // Relationships
+  wardrobes               Wardrobe[]
+  categories              Category[]
+  outfits                 Outfit[]
+  stylingRequests         StylingRequest[]
+  stylingSessions         StylingSession[] @relation("ClientSessions")
+  notifications           Notification[]
+  wardrobeSharesOwned     WardrobeShare[] @relation("WardrobeOwner")
+  wardrobeSharesReceived  WardrobeShare[] @relation("WardrobeSharedWith")
+  outfitSharesOwned       OutfitShare[] @relation("OutfitOwner")
+  outfitSharesReceived    OutfitShare[] @relation("OutfitSharedWith")
+  outfitSuggestions       OutfitSuggestion[]
+  payments                Payment[]
+  sentMessages            Message[]
+
+  // Friendships
+  sentFriendRequests      Friendship[] @relation("SentFriendRequests")
+  receivedFriendRequests  Friendship[] @relation("ReceivedFriendRequests")
+
+  @@index([authAccountId])
+  @@map("user_profiles")
+}
+
+model Friendship {
+  id                String            @id @default(uuid())
+
+  // The two users in the friendship
+  requesterId       String            // User who sent request
+  requester         UserProfile       @relation("SentFriendRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  addresseeId       String            // User who received request
+  addressee         UserProfile       @relation("ReceivedFriendRequests", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  status            FriendshipStatus  @default(PENDING)
+
+  // Timestamps
+  createdAt         DateTime          @default(now())
+  acceptedAt        DateTime?         // When friendship was accepted
+  updatedAt         DateTime          @updatedAt
+
+  // Ensure no duplicate friendships
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@index([status])
+  @@map("friendships")
+}
+
+model StylistProfile {
+  id                      String          @id @default(uuid())
+  authAccountId           String          @unique
+  authAccount             AuthAccount     @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
+
+  // Approval Status (current state only, full history in StylistApprovalLog)
+  profileStatus           ProfileStatus   @default(PENDING_APPROVAL)
+
+  // Professional Info
+  yearsOfExperience       Int
+  bio                     String
+  pricePerSession         Float           @default(299)
+  languages               String[]
+  expertise               String[]
+  portfolioImages         String[]
+
+  // Availability
+  isAvailable             Boolean         @default(true)
+
+  // Stats
+  totalSessions           Int             @default(0)
+  totalEarnings           Float           @default(0)
+  averageRating           Float           @default(0)
+  totalReviews            Int             @default(0)
+  walletBalance           Float           @default(0)
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  // Relationships
+  stylingSessions         StylingSession[] @relation("StylistSessions")
+  reviews                 Review[]
+  transactions            Transaction[]
+  withdrawals             Withdrawal[]
+  approvalLogs            StylistApprovalLog[]
+
+  @@index([authAccountId])
+  @@index([profileStatus])
+  @@index([isAvailable])
+  @@map("stylist_profiles")
+}
+
+model AdminProfile {
+  id                      String      @id @default(uuid())
+  authAccountId           String      @unique
+  authAccount             AuthAccount @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
+
+  firstName               String
+  lastName                String
+  role                    AdminRole   @default(ADMIN)
+  permissions             String[]    // Fine-grained permissions array
+  isActive                Boolean     @default(true)
+  lastLoginAt             DateTime?
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  // Relationships
+  approvalLogs            StylistApprovalLog[]
+
+  @@index([authAccountId])
+  @@index([role])
+  @@map("admin_profiles")
+}
+
+model StylistApprovalLog {
+  id                      String          @id @default(uuid())
+  stylistProfileId        String
+  stylistProfile          StylistProfile  @relation(fields: [stylistProfileId], references: [id], onDelete: Cascade)
+
+  adminId                 String
+  admin                   AdminProfile    @relation(fields: [adminId], references: [id])
+
+  action                  ApprovalAction
+  previousStatus          ProfileStatus?
+  newStatus               ProfileStatus
+  reason                  String?
+  notes                   String?
+  createdAt               DateTime        @default(now())
+
+  @@index([stylistProfileId])
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("stylist_approval_logs")
+}
+
+model UpgradeRequest {
+  id                      String          @id @default(uuid())
+  authAccountId           String
+  authAccount             AuthAccount     @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
+
+  status                  UpgradeStatus   @default(SUBMITTED)
+
+  // Application Data
+  yearsOfExperience       Int
+  bio                     String
+  pricePerSession         Float
+  languages               String[]
+  expertise               String[]
+  portfolioImages         String[]
+
+  // Timestamps
+  submittedAt             DateTime        @default(now())
+  approvedAt              DateTime?
+  rejectedAt              DateTime?
+  rejectionReason         String?
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+
+  @@index([authAccountId])
+  @@index([status])
+  @@map("upgrade_requests")
+}
+
+// ============================================
+// DOMAIN 1: USER MANAGEMENT
+// ============================================
+
+model FCMToken {
+  id                      String      @id @default(uuid())
+  authAccountId           String
+  authAccount             AuthAccount @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
+
+  token                   String      @unique
+  deviceId                String?
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  @@index([authAccountId])
+  @@map("fcm_tokens")
+}
+
+model Notification {
+  id                      String            @id @default(uuid())
+  userId                  String
+  user                    UserProfile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type                    NotificationType
+  title                   String
+  message                 String
+  data                    Json?
+  isRead                  Boolean           @default(false)
+  createdAt               DateTime          @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ============================================
+// DOMAIN 2: WARDROBE SYSTEM
+// ============================================
+
+model Wardrobe {
+  id                      String            @id @default(uuid())
+  userId                  String
+  user                    UserProfile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name                    String
+  location                String?
+  description             String?
+  isDefault               Boolean           @default(false)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  // Relationships
+  categories              Category[]
+  items                   ClothingItem[]
+  shares                  WardrobeShare[]
+  suggestions             OutfitSuggestion[]
+
+  @@index([userId])
+  @@index([userId, isDefault])
+  @@map("wardrobes")
+}
+
+model Category {
+  id                      String            @id @default(uuid())
+  userId                  String            // All categories belong to user
+  user                    UserProfile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type                    CategoryType      // CLOTHING or OUTFIT
+
+  // For CLOTHING type: which wardrobe?
+  wardrobeId              String?           // Nullable (only for CLOTHING type)
+  wardrobe                Wardrobe?         @relation(fields: [wardrobeId], references: [id], onDelete: Cascade)
+
+  name                    String
+  parentId                String?
+  parent                  Category?         @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children                Category[]        @relation("CategoryHierarchy")
+
+  order                   Int               @default(0)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  // Relationships - both clothing items and outfits can use categories
+  clothingItems           ClothingItem[]    @relation("clothingItems")
+  outfits                 Outfit[]          @relation("outfits")
+
+  @@index([userId])
+  @@index([type])
+  @@index([wardrobeId])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model ClothingItem {
+  id                      String            @id @default(uuid())
+  wardrobeId              String
+  wardrobe                Wardrobe          @relation(fields: [wardrobeId], references: [id], onDelete: Cascade)
+
+  categoryId              String?
+  category                Category?         @relation("clothingItems", fields: [categoryId], references: [id])
+
+  name                    String
+  itemType                String
+  color                   String?
+  season                  Season            @default(ALL_SEASON)
+  brand                   String?
+  notes                   String?
+  purchaseDate            DateTime?
+  price                   Float?
+  status                  ItemStatus        @default(AVAILABLE)
+  isPrivate               Boolean           @default(false)
+
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  // Relationships
+  images                  ClothingImage[]
+  outfitItems             OutfitItem[]
+
+  @@index([wardrobeId])
+  @@index([categoryId])
+  @@index([season])
+  @@index([status])
+  @@index([isPrivate])
+  @@map("clothing_items")
+}
+
+model ClothingImage {
+  id                      String            @id @default(uuid())
+  itemId                  String
+  item                    ClothingItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  url                     String
+  order                   Int               @default(0)
+  createdAt               DateTime          @default(now())
+
+  @@index([itemId])
+  @@map("clothing_images")
+}
+
+model WardrobeShare {
+  id                      String            @id @default(uuid())
+  wardrobeId              String
+  wardrobe                Wardrobe          @relation(fields: [wardrobeId], references: [id], onDelete: Cascade)
+
+  ownerId                 String
+  owner                   UserProfile       @relation("WardrobeOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  sharedWithId            String
+  sharedWith              UserProfile       @relation("WardrobeSharedWith", fields: [sharedWithId], references: [id], onDelete: Cascade)
+
+  permission              SharePermission
+  expiresAt               DateTime?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@unique([wardrobeId, sharedWithId])
+  @@index([wardrobeId])
+  @@index([sharedWithId])
+  @@map("wardrobe_shares")
+}
+
+// ============================================
+// DOMAIN 3: OUTFIT MANAGEMENT
+// ============================================
+
+model Outfit {
+  id                      String                @id @default(uuid())
+  userId                  String
+  user                    UserProfile           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId              String?
+  category                Category?             @relation("outfits", fields: [categoryId], references: [id])
+
+  name                    String
+  description             String?
+  season                  Season?
+  occasion                String?
+  tags                    String[]
+  isFavorite              Boolean               @default(false)
+  previewImage            String?
+
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+
+  // Relationships
+  items                   OutfitItem[]
+  calendarEntries         OutfitCalendarEntry[]
+  shares                  OutfitShare[]
+  suggestions             OutfitSuggestion[]
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([season])
+  @@index([isFavorite])
+  @@map("outfits")
+}
+
+model OutfitItem {
+  id                      String            @id @default(uuid())
+  outfitId                String
+  outfit                  Outfit            @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+
+  itemId                  String
+  item                    ClothingItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  order                   Int               @default(0)
+  createdAt               DateTime          @default(now())
+
+  @@unique([outfitId, itemId])
+  @@index([outfitId])
+  @@index([itemId])
+  @@map("outfit_items")
+}
+
+model OutfitCalendarEntry {
+  id                      String            @id @default(uuid())
+  outfitId                String
+  outfit                  Outfit            @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+
+  userId                  String
+  scheduledDate           DateTime
+  notes                   String?
+
+  // Google Calendar Integration
+  googleEventId           String?           // Google Calendar event ID for sync
+  syncedToGoogle          Boolean           @default(false)
+  lastSyncedAt            DateTime?
+
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@unique([userId, scheduledDate])
+  @@index([userId])
+  @@index([scheduledDate])
+  @@index([googleEventId])
+  @@map("outfit_calendar_entries")
+}
+
+model OutfitShare {
+  id                      String            @id @default(uuid())
+  outfitId                String
+  outfit                  Outfit            @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+
+  ownerId                 String
+  owner                   UserProfile       @relation("OutfitOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  sharedWithId            String
+  sharedWith              UserProfile       @relation("OutfitSharedWith", fields: [sharedWithId], references: [id], onDelete: Cascade)
+
+  permission              SharePermission
+  expiresAt               DateTime?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@unique([outfitId, sharedWithId])
+  @@index([outfitId])
+  @@index([sharedWithId])
+  @@map("outfit_shares")
+}
+
+model OutfitSuggestion {
+  id                      String            @id @default(uuid())
+  wardrobeId              String
+  wardrobe                Wardrobe          @relation(fields: [wardrobeId], references: [id], onDelete: Cascade)
+
+  outfitId                String?
+  outfit                  Outfit?           @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+
+  suggestedById           String
+  suggestedBy             UserProfile       @relation(fields: [suggestedById], references: [id], onDelete: Cascade)
+
+  isAccepted              Boolean?
+  comment                 String?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@index([wardrobeId])
+  @@index([suggestedById])
+  @@map("outfit_suggestions")
+}
+
+// ============================================
+// DOMAIN 4: STYLIST MARKETPLACE
+// ============================================
+
+model StylingRequest {
+  id                      String            @id @default(uuid())
+  userId                  String
+  user                    UserProfile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  occasion                String
+  timeline                RequestTimeline
+  requestType             RequestType       @default(IMMEDIATE)
+  scheduledStartTime      DateTime?
+  scheduledEndTime        DateTime?
+  preferredStyles         String[]
+  budget                  Float?
+  notes                   String?
+  status                  RequestStatus     @default(PENDING)
+  matchedStylistId        String?
+  expiresAt               DateTime?
+
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  // Relationships
+  session                 StylingSession?
+
+  @@index([userId])
+  @@index([status])
+  @@index([matchedStylistId])
+  @@index([requestType])
+  @@index([scheduledStartTime])
+  @@map("styling_requests")
+}
+
+model StylingSession {
+  id                      String            @id @default(uuid())
+  requestId               String            @unique
+  request                 StylingRequest    @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  userId                  String
+  user                    UserProfile       @relation("ClientSessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  stylistId               String
+  stylist                 StylistProfile    @relation("StylistSessions", fields: [stylistId], references: [id], onDelete: Cascade)
+
+  status                  SessionStatus     @default(ACTIVE)
+  startedAt               DateTime          @default(now())
+  endedAt                 DateTime?
+  isFreeSession           Boolean           @default(false)
+  amountCharged           Float?
+  platformFee             Float?
+  stylistEarning          Float?
+
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  // Relationships
+  messages                Message[]
+  review                  Review?
+  payment                 Payment?
+
+  @@index([userId])
+  @@index([stylistId])
+  @@index([status])
+  @@map("styling_sessions")
+}
+
+model Message {
+  id                      String            @id @default(uuid())
+  sessionId               String
+  session                 StylingSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  senderId                String
+  sender                  UserProfile       @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  content                 String
+  images                  String[]
+  isRead                  Boolean           @default(false)
+  createdAt               DateTime          @default(now())
+
+  @@index([sessionId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model Review {
+  id                      String            @id @default(uuid())
+  sessionId               String            @unique
+  session                 StylingSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  userId                  String
+  stylistId               String
+  stylist                 StylistProfile    @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+
+  rating                  Int
+  comment                 String?
+  isFlagged               Boolean           @default(false)
+
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@index([stylistId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+// ============================================
+// DOMAIN 5: PAYMENTS
+// ============================================
+
+model Payment {
+  id                      String            @id @default(uuid())
+  sessionId               String            @unique
+  session                 StylingSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  userId                  String
+  user                    UserProfile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amount                  Float
+  platformFee             Float
+  stylistEarning          Float
+  razorpayOrderId         String            @unique
+  razorpayPaymentId       String?           @unique
+  razorpaySignature       String?
+  status                  PaymentStatus     @default(PENDING)
+
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([razorpayOrderId])
+  @@map("payments")
+}
+
+model Transaction {
+  id                      String            @id @default(uuid())
+  stylistProfileId        String
+  stylistProfile          StylistProfile    @relation(fields: [stylistProfileId], references: [id], onDelete: Cascade)
+
+  type                    TransactionType
+  amount                  Float
+  description             String
+  balanceBefore           Float
+  balanceAfter            Float
+  createdAt               DateTime          @default(now())
+
+  @@index([stylistProfileId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+model Withdrawal {
+  id                      String            @id @default(uuid())
+  stylistProfileId        String
+  stylistProfile          StylistProfile    @relation(fields: [stylistProfileId], references: [id], onDelete: Cascade)
+
+  amount                  Float
+  bankAccountNumber       String
+  ifscCode                String
+  accountHolderName       String
+  status                  WithdrawalStatus  @default(PENDING)
+  processedAt             DateTime?
+  failureReason           String?
+
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@index([stylistProfileId])
+  @@index([status])
+  @@map("withdrawals")
 }

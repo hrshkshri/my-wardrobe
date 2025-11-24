@@ -1,0 +1,32 @@
+name: Lint & Format
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Check code formatting
+        run: yarn format:check
+
+      - name: TypeScript type check
+        run: yarn build
+
+      - name: Check for unused dependencies
+        run: yarn dlx depcheck --ignores=@types/jest,@types/node,ts-jest,typescript --json || true

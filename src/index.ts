@@ -1,21 +1,47 @@
 import 'dotenv/config';
-import express, { Application, Request, Response, NextFunction } from 'express';
+import express, { Request, Response, NextFunction, Express } from 'express';
 import cors from 'cors';
+import compression from 'compression';
+import swaggerUi from 'swagger-ui-express';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import { AppError } from './utils/AppError';
 import { corsOptions } from './utils/corsOptions';
 import { apiLimiter } from './utils/rateLimiter';
 import { logger } from './utils/logger';
 import statusRoutes from './routes/status.routes';
+import { setupSecurityMiddleware } from './middleware/security.middleware';
+import {
+  requestIdMiddleware,
+  errorLoggingMiddleware,
+} from './middleware/requestLogger.middleware';
+import { env } from './config';
+import { swaggerSpec } from './config/swagger';
 
-const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const app: Express = express();
 
-// Middleware
+// Apply security middleware first
+setupSecurityMiddleware(app);
+
+// Request compression
+app.use(compression());
+
+// Request ID middleware
+app.use(requestIdMiddleware);
+
+// Standard middleware
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Rate limiting
 app.use(apiLimiter);
+
+// Swagger/OpenAPI documentation
+app.use('/api-docs', swaggerUi.serve);
+app.get(
+  '/api-docs',
+  swaggerUi.setup(swaggerSpec, { customSiteTitle: 'My Wardrobe API' })
+);
 
 // Health check route
 app.get('/', (_req: Request, res: Response) => {
@@ -31,19 +57,46 @@ app.use('/api/status', statusRoutes);
 
 // Add your routes here
 // Example: app.use('/api/users', userRoutes);
+// Example: app.use('/api/auth', authRoutes);
 
 // 404 Handler - Must be after all routes
 app.use((req: Request, _res: Response, _next: NextFunction) => {
   throw new AppError(`Route ${req.originalUrl} not found`, 404);
 });
 
+// Error logging middleware
+app.use(errorLoggingMiddleware);
+
 // Global Error Handler - Must be last
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
-  logger.info(`Server is running on port ${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+const PORT = env.PORT;
+
+const server = app.listen(PORT, () => {
+  logger.info(`Server started successfully`, {
+    port: PORT,
+    environment: env.NODE_ENV,
+    nodeVersion: process.version,
+  });
+  logger.info(`API Documentation: http://localhost:${PORT}/api-docs`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
 });
 
 export default app;

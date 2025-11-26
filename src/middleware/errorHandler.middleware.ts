@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodError, ZodIssue } from 'zod';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
+import { env } from '../config';
 import {
   PrismaClientKnownRequestError,
   PrismaClientValidationError,
@@ -65,6 +66,6 @@ export const errorHandler = (
   res.status(statusCode).json({
     success: false,
     message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    ...(env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 };

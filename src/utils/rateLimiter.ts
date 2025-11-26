@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit';
+import { env } from '../config';
 
 // General API rate limiter
 export const apiLimiter = rateLimit({
@@ -11,7 +12,7 @@ export const apiLimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   // Skip rate limiting in development
-  skip: () => process.env.NODE_ENV === 'development',
+  skip: () => env.NODE_ENV === 'development',
 });
 
 // Stricter rate limiter for authentication endpoints
@@ -25,7 +26,7 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Don't count successful requests
-  skip: () => process.env.NODE_ENV === 'development',
+  skip: () => env.NODE_ENV === 'development',
 });
 
 // Rate limiter for creation endpoints
@@ -38,5 +39,5 @@ export const createLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'development',
+  skip: () => env.NODE_ENV === 'development',
 });

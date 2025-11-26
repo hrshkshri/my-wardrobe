@@ -3,9 +3,6 @@ import mongoSanitize from 'express-mongo-sanitize';
 import { Request, Response, NextFunction, Express } from 'express';
 import { env } from '../config';
 
-/**
- * Configure and apply security middleware to Express app
- */
 export const setupSecurityMiddleware = (app: Express): void => {
   // Helmet.js - HTTP security headers
   app.use(helmet());
@@ -13,18 +10,8 @@ export const setupSecurityMiddleware = (app: Express): void => {
   // Sanitize data against NoSQL Injection
   app.use(mongoSanitize());
 
-  // Rate limiting headers
+  // Prevent caching of sensitive data
   app.use((req: Request, res: Response, next: NextFunction) => {
-    // Set CORS headers
-    res.header(
-      'Access-Control-Allow-Origin',
-      process.env.CORS_ORIGIN || 'http://localhost:3000'
-    );
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.header('Access-Control-Max-Age', '3600');
-
-    // Prevent caching of sensitive data
     if (req.path.includes('/auth') || req.path.includes('/secure')) {
       res.header(
         'Cache-Control',
@@ -33,7 +20,6 @@ export const setupSecurityMiddleware = (app: Express): void => {
       res.header('Pragma', 'no-cache');
       res.header('Expires', '0');
     }
-
     next();
   });
 

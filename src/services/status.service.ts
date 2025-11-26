@@ -1,5 +1,6 @@
 import { prisma } from '../utils/prisma';
 import { logger } from '../utils/logger';
+import { env } from '../config';
 import { StatusResponse } from '../types/status.types';
 
 const statusService = {
@@ -24,7 +25,7 @@ const statusService = {
       const timestamp = new Date().toISOString();
 
       // Get environment
-      const environment = process.env.NODE_ENV || 'development';
+      const environment = env.NODE_ENV;
 
       // Determine overall status
       const status: 'healthy' | 'unhealthy' =

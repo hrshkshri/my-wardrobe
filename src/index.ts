@@ -14,8 +14,7 @@ import {
   requestIdMiddleware,
   errorLoggingMiddleware,
 } from './middleware/requestLogger.middleware';
-import { env } from './config';
-import { swaggerSpec } from './config/swagger';
+import { env, swaggerSpec } from './config';
 
 const app: Express = express();
 
@@ -43,7 +42,32 @@ app.get(
   swaggerUi.setup(swaggerSpec, { customSiteTitle: 'My Wardrobe API' })
 );
 
-// Health check route
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: API welcome endpoint
+ *     description: Returns welcome message and API version
+ *     tags:
+ *       - General
+ *     responses:
+ *       200:
+ *         description: Welcome message
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Welcome to My Wardrobe API
+ *                 version:
+ *                   type: string
+ *                   example: 1.0.0
+ */
 app.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -54,10 +78,6 @@ app.get('/', (_req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/status', statusRoutes);
-
-// Add your routes here
-// Example: app.use('/api/users', userRoutes);
-// Example: app.use('/api/auth', authRoutes);
 
 // 404 Handler - Must be after all routes
 app.use((req: Request, _res: Response, _next: NextFunction) => {

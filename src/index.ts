@@ -115,6 +115,18 @@ const startServer = async () => {
       logger.info(`API Documentation: http://localhost:${PORT}/api-docs`);
     });
 
+    // Handle port already in use
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EADDRINUSE') {
+        logger.error(
+          `Port ${PORT} is already in use. Please stop the existing process or use a different port.`
+        );
+      } else {
+        logger.error(`Server error: ${error.message}`);
+      }
+      process.exit(1);
+    });
+
     // Graceful shutdown
     process.on('SIGTERM', async () => {
       logger.info('SIGTERM signal received: closing HTTP server');

@@ -34,3 +34,7 @@ coverage/
 
 # Misc
 .husky/_
+
+# Redis
+dump.rdb
+appendonly.aof

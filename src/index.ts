@@ -17,6 +17,7 @@ import {
 import { env, swaggerSpec, swaggerUiOptions } from './config';
 import { HTTP_STATUS_CODES } from './constants';
 import { createSuccessResponse } from './dtos/response.dto';
+import { initializeCache, closeCache } from './utils/caching/cache';
 
 const app: Express = express();
 
@@ -95,30 +96,49 @@ app.use(errorHandler);
 // Start server
 const PORT = env.PORT;
 
-const server = app.listen(PORT, () => {
-  logger.info(`Server started successfully`, {
-    port: PORT,
-    environment: env.NODE_ENV,
-    nodeVersion: process.version,
-  });
-  logger.info(`API Documentation: http://localhost:${PORT}/api-docs`);
-});
+const startServer = async () => {
+  try {
+    // Initialize Redis cache
+    const cache = await initializeCache();
+    if (cache) {
+      logger.info('Cache system initialized successfully');
+    } else {
+      logger.warn('Running without Redis cache (disabled or unavailable)');
+    }
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
-  });
-});
+    const server = app.listen(PORT, () => {
+      logger.info(`Server started successfully`, {
+        port: PORT,
+        environment: env.NODE_ENV,
+        nodeVersion: process.version,
+      });
+      logger.info(`API Documentation: http://localhost:${PORT}/api-docs`);
+    });
 
-process.on('SIGINT', () => {
-  logger.info('SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
-  });
-});
+    // Graceful shutdown
+    process.on('SIGTERM', async () => {
+      logger.info('SIGTERM signal received: closing HTTP server');
+      await closeCache();
+      server.close(() => {
+        logger.info('HTTP server closed');
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGINT', async () => {
+      logger.info('SIGINT signal received: closing HTTP server');
+      await closeCache();
+      server.close(() => {
+        logger.info('HTTP server closed');
+        process.exit(0);
+      });
+    });
+  } catch (error) {
+    logger.error('Failed to start server', { error });
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;

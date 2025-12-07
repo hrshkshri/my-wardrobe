@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError, ZodType } from 'zod';
-import { AppError } from '../utils/AppError';
+import { AppError } from '../utils/errors/AppError';
 import { HTTP_STATUS_CODES } from '../constants';
 
 /**

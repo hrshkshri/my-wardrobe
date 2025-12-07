@@ -1,4 +1,4 @@
-import { getCurrentTimestamp } from '../utils/dateTime';
+import { getCurrentTimestamp } from '../utils/common/dateTime';
 
 /**
  * Standard API Response DTO

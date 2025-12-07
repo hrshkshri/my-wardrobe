@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { env } from '../config';
+import { env } from '../../config';
 import { createLogFormat } from './logFormatter';
 
 const { combine, timestamp, colorize, errors } = winston.format;

@@ -4,10 +4,10 @@ import cors from 'cors';
 import compression from 'compression';
 import swaggerUi from 'swagger-ui-express';
 import { errorHandler } from './middleware/errorHandler.middleware';
-import { AppError } from './utils/AppError';
-import { corsOptions } from './utils/corsOptions';
-import { apiLimiter } from './utils/rateLimiter';
-import { logger } from './utils/logger';
+import { AppError } from './utils/errors/AppError';
+import { corsOptions } from './utils/security/corsOptions';
+import { apiLimiter } from './utils/rateLimit/rateLimiter';
+import { logger } from './utils/logging/logger';
 import { statusRoutes } from './routes';
 import { setupSecurityMiddleware } from './middleware/security.middleware';
 import {

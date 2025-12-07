@@ -1,5 +1,5 @@
 import { CorsOptions } from 'cors';
-import { env } from '../config';
+import { env } from '../../config';
 
 // Default local development origins
 const DEFAULT_LOCAL_ORIGINS = [

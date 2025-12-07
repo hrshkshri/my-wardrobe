@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
-import { AppError } from '../utils/AppError';
+import { logger } from '../utils/logging/logger';
+import { AppError } from '../utils/errors/AppError';
 import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
-import { sendMiddlewareError } from '../utils/middlewareErrorHandler';
+import { sendMiddlewareError } from '../utils/errors/middlewareErrorHandler';
 
 export type RoleType = 'ADMIN' | 'MODERATOR' | 'STYLIST' | 'USER';
 

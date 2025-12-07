@@ -1,5 +1,5 @@
-import { prisma } from '../utils/prisma';
-import { logger } from '../utils/logger';
+import { prisma } from '../utils/database/prisma';
+import { logger } from '../utils/logging/logger';
 import { env } from '../config';
 import { StatusResponse } from '../types/status.types';
 

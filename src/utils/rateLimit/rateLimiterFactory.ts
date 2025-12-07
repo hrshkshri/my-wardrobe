@@ -3,7 +3,7 @@
  */
 
 import rateLimit from 'express-rate-limit';
-import { env } from '../config';
+import { env } from '../../config';
 
 interface RateLimiterConfig {
   windowMs: number;

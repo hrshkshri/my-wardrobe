@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
-import { AppError } from '../utils/AppError';
+import { logger } from '../utils/logging/logger';
+import { AppError } from '../utils/errors/AppError';
 import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
-import { extractToken } from '../utils/tokenExtractor';
-import { sendMiddlewareError } from '../utils/middlewareErrorHandler';
-import { formatError } from '../utils/errorFormatter';
+import { extractToken } from '../utils/security/tokenExtractor';
+import { sendMiddlewareError } from '../utils/errors/middlewareErrorHandler';
+import { formatError } from '../utils/errors/errorFormatter';
 
 // Extend Express Request to include user info
 declare global {

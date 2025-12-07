@@ -2,7 +2,7 @@
  * Guard utilities for cache operations
  */
 
-import { logger } from './logger';
+import { logger } from '../logging/logger';
 
 /**
  * Check if cache is available and log warning if not

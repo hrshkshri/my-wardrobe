@@ -4,8 +4,8 @@
 
 import { Response } from 'express';
 import { AppError } from './AppError';
-import { logger } from './logger';
-import { createErrorResponse } from '../dtos/response.dto';
+import { logger } from '../logging/logger';
+import { createErrorResponse } from '../../dtos/response.dto';
 import { formatError } from './errorFormatter';
 
 /**

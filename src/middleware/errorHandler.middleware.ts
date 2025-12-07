@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { AppError } from '../utils/AppError';
-import { logger } from '../utils/logger';
+import { AppError } from '../utils/errors/AppError';
+import { logger } from '../utils/logging/logger';
 import { env } from '../config';
 import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
 import { createErrorResponse } from '../dtos/response.dto';

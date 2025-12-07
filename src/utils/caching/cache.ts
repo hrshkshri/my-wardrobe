@@ -1,7 +1,7 @@
 import Redis from 'ioredis';
-import { logger } from './logger';
+import { logger } from '../logging/logger';
 import { isCacheAvailable, safeCacheOperation } from './cacheGuard';
-import { formatError } from './errorFormatter';
+import { formatError } from '../errors/errorFormatter';
 
 let redis: Redis | null = null;
 

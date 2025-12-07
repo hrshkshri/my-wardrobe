@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodError, ZodIssue } from 'zod';
+import { ZodError } from 'zod';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 import { env } from '../config';
@@ -28,11 +28,11 @@ export const errorHandler = (
   // Handle Zod validation errors
   else if (err instanceof ZodError) {
     statusCode = HTTP_STATUS_CODES.BAD_REQUEST;
-    const errorMessages = err.issues.map((issue: ZodIssue) => ({
+    const errorMessages = err.issues.map((issue) => ({
       field: issue.path.join('.'),
       message: issue.message,
     }));
-    message = `${MESSAGES.VALIDATION_ERROR}: ${errorMessages.map((e: { field: string; message: string }) => `${e.field}: ${e.message}`).join(', ')}`;
+    message = `${MESSAGES.VALIDATION_ERROR}: ${errorMessages.map((e) => `${e.field}: ${e.message}`).join(', ')}`;
   }
 
   // Handle Prisma errors

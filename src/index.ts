@@ -8,7 +8,7 @@ import { AppError } from './utils/AppError';
 import { corsOptions } from './utils/corsOptions';
 import { apiLimiter } from './utils/rateLimiter';
 import { logger } from './utils/logger';
-import statusRoutes from './routes/status.routes';
+import { statusRoutes } from './routes';
 import { setupSecurityMiddleware } from './middleware/security.middleware';
 import {
   requestIdMiddleware,

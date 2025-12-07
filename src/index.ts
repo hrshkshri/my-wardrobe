@@ -15,6 +15,7 @@ import {
   errorLoggingMiddleware,
 } from './middleware/requestLogger.middleware';
 import { env, swaggerSpec } from './config';
+import { HTTP_STATUS_CODES } from './constants';
 
 const app: Express = express();
 
@@ -69,7 +70,7 @@ app.get(
  *                   example: 1.0.0
  */
 app.get('/', (_req: Request, res: Response) => {
-  res.status(200).json({
+  res.status(HTTP_STATUS_CODES.OK).json({
     success: true,
     message: 'Welcome to My Wardrobe API',
     version: '1.0.0',
@@ -81,7 +82,10 @@ app.use('/api/status', statusRoutes);
 
 // 404 Handler - Must be after all routes
 app.use((req: Request, _res: Response, _next: NextFunction) => {
-  throw new AppError(`Route ${req.originalUrl} not found`, 404);
+  throw new AppError(
+    `Route ${req.originalUrl} not found`,
+    HTTP_STATUS_CODES.NOT_FOUND
+  );
 });
 
 // Error logging middleware

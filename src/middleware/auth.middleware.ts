@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/AppError';
+import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
 
 // Extend Express Request to include user info
 declare global {
@@ -26,13 +27,19 @@ export const authenticate = (
     const authHeader = req.header('Authorization');
 
     if (!authHeader) {
-      throw new AppError('Authorization header is missing', 401);
+      throw new AppError(
+        MESSAGES.AUTH_HEADER_MISSING,
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
     }
 
     const token = authHeader.split(' ')[1];
 
     if (!token) {
-      throw new AppError('Token is missing', 401);
+      throw new AppError(
+        MESSAGES.TOKEN_MISSING,
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
     }
 
     // TODO: Verify JWT token
@@ -54,9 +61,9 @@ export const authenticate = (
 
     const error = err instanceof Error ? err : new Error(String(err));
     logger.error('Authentication failed', { error: error.message });
-    res.status(401).json({
+    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
       success: false,
-      message: 'Authentication failed',
+      message: MESSAGES.AUTH_FAILED,
     });
   }
 };

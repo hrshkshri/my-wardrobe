@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/AppError';
+import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
 
 export type RoleType = 'ADMIN' | 'MODERATOR' | 'STYLIST' | 'USER';
 
@@ -11,7 +12,10 @@ export const authorize = (...allowedRoles: RoleType[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
       if (!req.userId) {
-        throw new AppError('User not authenticated', 401);
+        throw new AppError(
+          MESSAGES.USER_NOT_AUTHENTICATED,
+          HTTP_STATUS_CODES.UNAUTHORIZED
+        );
       }
 
       const userRole = req.userRole as RoleType;
@@ -23,7 +27,10 @@ export const authorize = (...allowedRoles: RoleType[]) => {
           requiredRoles: allowedRoles,
         });
 
-        throw new AppError('Insufficient permissions', 403);
+        throw new AppError(
+          MESSAGES.INSUFFICIENT_PERMISSIONS,
+          HTTP_STATUS_CODES.FORBIDDEN
+        );
       }
 
       logger.debug('User authorized', { userId: req.userId, role: userRole });
@@ -39,9 +46,9 @@ export const authorize = (...allowedRoles: RoleType[]) => {
 
       const error = err instanceof Error ? err : new Error(String(err));
       logger.error('Authorization check failed', { error: error.message });
-      res.status(500).json({
+      res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: 'Authorization check failed',
+        message: MESSAGES.AUTHORIZATION_CHECK_FAILED,
       });
     }
   };
@@ -57,7 +64,10 @@ export const authorizeOwner = (
 ): void => {
   try {
     if (!req.userId) {
-      throw new AppError('User not authenticated', 401);
+      throw new AppError(
+        MESSAGES.USER_NOT_AUTHENTICATED,
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
     }
 
     const resourceOwnerId = req.params.userId || req.params.id;
@@ -68,7 +78,10 @@ export const authorizeOwner = (
         resourceOwnerId,
       });
 
-      throw new AppError('You are not authorized to access this resource', 403);
+      throw new AppError(
+        MESSAGES.RESOURCE_ACCESS_DENIED,
+        HTTP_STATUS_CODES.FORBIDDEN
+      );
     }
 
     next();
@@ -83,9 +96,9 @@ export const authorizeOwner = (
 
     const error = err instanceof Error ? err : new Error(String(err));
     logger.error('Owner authorization check failed', { error: error.message });
-    res.status(500).json({
+    res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: 'Authorization check failed',
+      message: MESSAGES.AUTHORIZATION_CHECK_FAILED,
     });
   }
 };

@@ -3,6 +3,7 @@ import { ZodError, ZodIssue } from 'zod';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 import { env } from '../config';
+import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
 import {
   PrismaClientKnownRequestError,
   PrismaClientValidationError,
@@ -15,8 +16,8 @@ export const errorHandler = (
   _next: NextFunction
 ) => {
   // Default error
-  let statusCode = 500;
-  let message = 'Internal server error';
+  let statusCode: number = HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+  let message: string = MESSAGES.INTERNAL_ERROR;
 
   // Handle AppError
   if (err instanceof AppError) {
@@ -26,37 +27,37 @@ export const errorHandler = (
 
   // Handle Zod validation errors
   else if (err instanceof ZodError) {
-    statusCode = 400;
+    statusCode = HTTP_STATUS_CODES.BAD_REQUEST;
     const errorMessages = err.issues.map((issue: ZodIssue) => ({
       field: issue.path.join('.'),
       message: issue.message,
     }));
-    message = `Validation error: ${errorMessages.map((e: { field: string; message: string }) => `${e.field}: ${e.message}`).join(', ')}`;
+    message = `${MESSAGES.VALIDATION_ERROR}: ${errorMessages.map((e: { field: string; message: string }) => `${e.field}: ${e.message}`).join(', ')}`;
   }
 
   // Handle Prisma errors
   else if (err instanceof PrismaClientKnownRequestError) {
     // Unique constraint violation
     if (err.code === 'P2002') {
-      statusCode = 409;
-      message = 'A record with this value already exists';
+      statusCode = HTTP_STATUS_CODES.CONFLICT;
+      message = MESSAGES.DUPLICATE_ENTRY;
     }
     // Record not found
     else if (err.code === 'P2025') {
-      statusCode = 404;
-      message = 'Record not found';
+      statusCode = HTTP_STATUS_CODES.NOT_FOUND;
+      message = MESSAGES.NOT_FOUND;
     }
     // Foreign key constraint failed
     else if (err.code === 'P2003') {
-      statusCode = 400;
-      message = 'Invalid reference to related record';
+      statusCode = HTTP_STATUS_CODES.BAD_REQUEST;
+      message = MESSAGES.INVALID_REFERENCE;
     }
   }
 
   // Handle Prisma validation errors
   else if (err instanceof PrismaClientValidationError) {
-    statusCode = 400;
-    message = 'Invalid data provided';
+    statusCode = HTTP_STATUS_CODES.BAD_REQUEST;
+    message = MESSAGES.INVALID_DATA;
   }
 
   // Log error

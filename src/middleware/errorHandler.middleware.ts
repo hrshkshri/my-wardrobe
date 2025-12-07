@@ -5,6 +5,7 @@ import { logger } from '../utils/logger';
 import { env } from '../config';
 import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
 import { createErrorResponse } from '../dtos/response.dto';
+import { shouldIgnorePath } from './config';
 import {
   PrismaClientKnownRequestError,
   PrismaClientValidationError,
@@ -16,6 +17,13 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
+  // Skip error handling for ignored paths
+  if (shouldIgnorePath(_req.path)) {
+    // Still send error response but don't log
+    return res
+      .status(HTTP_STATUS_CODES.NOT_FOUND)
+      .json(createErrorResponse('Not found'));
+  }
   // Default error
   let statusCode: number = HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
   let message: string = MESSAGES.INTERNAL_ERROR;
@@ -72,5 +80,5 @@ export const errorHandler = (
     (errorResponse as any).stack = err.stack;
   }
 
-  res.status(statusCode).json(errorResponse);
+  return res.status(statusCode).json(errorResponse);
 };

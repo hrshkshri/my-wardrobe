@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
+import { shouldIgnorePath } from './config';
 
 // Extend Express Request to include requestId
 declare global {
@@ -27,8 +28,10 @@ export const requestIdMiddleware = (
   // Add request ID to response headers
   res.setHeader('x-request-id', requestId);
 
-  // Log incoming request
-  logger.info(`[${requestId}] ${req.method} ${req.path}`);
+  // Only log if not in ignore list
+  if (!shouldIgnorePath(req.path)) {
+    logger.info(`[${requestId}] ${req.method} ${req.path}`);
+  }
 
   // Capture the original send and json methods
   const originalSend = res.send;
@@ -37,7 +40,9 @@ export const requestIdMiddleware = (
   // Helper function to log response
   const logResponse = () => {
     const duration = Date.now() - req.startTime;
-    logger.info(`[${requestId}] ${res.statusCode} ${duration}ms`);
+    if (!shouldIgnorePath(req.path)) {
+      logger.info(`[${requestId}] ${res.statusCode} ${duration}ms`);
+    }
   };
 
   // Override res.send to log response details
@@ -65,9 +70,13 @@ export const errorLoggingMiddleware = (
   next: NextFunction
 ): void => {
   const duration = req.startTime ? Date.now() - req.startTime : 0;
-  logger.error(
-    `[${req.id || 'unknown'}] ERROR: ${err.message} (${duration}ms)`
-  );
+
+  // Only log if not in ignore list
+  if (!shouldIgnorePath(req.path)) {
+    logger.error(
+      `[${req.id || 'unknown'}] ERROR: ${err.message} (${duration}ms)`
+    );
+  }
 
   next(err);
 };

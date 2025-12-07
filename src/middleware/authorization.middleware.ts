@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/AppError';
 import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
-import { createErrorResponse } from '../dtos/response.dto';
+import { sendMiddlewareError } from '../utils/middlewareErrorHandler';
 
 export type RoleType = 'ADMIN' | 'MODERATOR' | 'STYLIST' | 'USER';
 
@@ -37,16 +37,12 @@ export const authorize = (...allowedRoles: RoleType[]) => {
       logger.debug('User authorized', { userId: req.userId, role: userRole });
       next();
     } catch (err) {
-      if (err instanceof AppError) {
-        res.status(err.statusCode).json(createErrorResponse(err.message));
-        return;
-      }
-
-      const error = err instanceof Error ? err : new Error(String(err));
-      logger.error('Authorization check failed', { error: error.message });
-      res
-        .status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json(createErrorResponse(MESSAGES.AUTHORIZATION_CHECK_FAILED));
+      sendMiddlewareError(
+        err,
+        res,
+        HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        MESSAGES.AUTHORIZATION_CHECK_FAILED
+      );
     }
   };
 };
@@ -83,16 +79,12 @@ export const authorizeOwner = (
 
     next();
   } catch (err) {
-    if (err instanceof AppError) {
-      res.status(err.statusCode).json(createErrorResponse(err.message));
-      return;
-    }
-
-    const error = err instanceof Error ? err : new Error(String(err));
-    logger.error('Owner authorization check failed', { error: error.message });
-    res
-      .status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json(createErrorResponse(MESSAGES.AUTHORIZATION_CHECK_FAILED));
+    sendMiddlewareError(
+      err,
+      res,
+      HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      MESSAGES.AUTHORIZATION_CHECK_FAILED
+    );
   }
 };
 

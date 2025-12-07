@@ -6,7 +6,7 @@
   "author": "Claude <noreply@anthropic.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'printf \"\\033c\" && ts-node' src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "jest",

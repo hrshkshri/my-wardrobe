@@ -1,3 +1,5 @@
+import { getCurrentTimestamp } from '../utils/dateTime';
+
 /**
  * Standard API Response DTO
  */
@@ -23,7 +25,7 @@ export const createSuccessResponse = <T>(
     message,
     ...(data !== undefined && { data }),
     ...(traceId && { traceId }),
-    timestamp: new Date().toISOString(),
+    timestamp: getCurrentTimestamp(),
   };
 };
 
@@ -40,7 +42,7 @@ export const createErrorResponse = (
     message,
     ...(errors && { errors }),
     ...(traceId && { traceId }),
-    timestamp: new Date().toISOString(),
+    timestamp: getCurrentTimestamp(),
   };
 };
 

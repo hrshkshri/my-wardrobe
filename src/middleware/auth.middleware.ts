@@ -2,7 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/AppError';
 import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
-import { createErrorResponse } from '../dtos/response.dto';
+import { extractToken } from '../utils/tokenExtractor';
+import { sendMiddlewareError } from '../utils/middlewareErrorHandler';
+import { formatError } from '../utils/errorFormatter';
 
 // Extend Express Request to include user info
 declare global {
@@ -34,7 +36,7 @@ export const authenticate = (
       );
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = extractToken(authHeader);
 
     if (!token) {
       throw new AppError(
@@ -52,16 +54,12 @@ export const authenticate = (
     logger.debug('User authenticated', { userId: req.userId });
     next();
   } catch (err) {
-    if (err instanceof AppError) {
-      res.status(err.statusCode).json(createErrorResponse(err.message));
-      return;
-    }
-
-    const error = err instanceof Error ? err : new Error(String(err));
-    logger.error('Authentication failed', { error: error.message });
-    res
-      .status(HTTP_STATUS_CODES.UNAUTHORIZED)
-      .json(createErrorResponse(MESSAGES.AUTH_FAILED));
+    sendMiddlewareError(
+      err,
+      res,
+      HTTP_STATUS_CODES.UNAUTHORIZED,
+      MESSAGES.AUTH_FAILED
+    );
   }
 };
 
@@ -81,7 +79,7 @@ export const authenticateOptional = (
       return;
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = extractToken(authHeader);
 
     if (!token) {
       next();
@@ -96,8 +94,7 @@ export const authenticateOptional = (
 
     next();
   } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    logger.warn('Optional authentication failed', { error: error.message });
+    logger.warn('Optional authentication failed', { error: formatError(err) });
     next();
   }
 };

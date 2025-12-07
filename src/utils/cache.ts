@@ -1,5 +1,7 @@
 import Redis from 'ioredis';
 import { logger } from './logger';
+import { isCacheAvailable, safeCacheOperation } from './cacheGuard';
+import { formatError } from './errorFormatter';
 
 let redis: Redis | null = null;
 
@@ -36,7 +38,7 @@ export const initializeCache = async (): Promise<Redis | null> => {
     return redis;
   } catch (error) {
     logger.error('Failed to initialize Redis', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: formatError(error),
     });
     throw error;
   }
@@ -46,20 +48,18 @@ export const initializeCache = async (): Promise<Redis | null> => {
  * Get value from cache
  */
 export const getCachedValue = async <T>(key: string): Promise<T | null> => {
-  try {
-    if (!redis) {
-      return null;
-    }
-
-    const value = await redis.get(key);
-    return value ? (JSON.parse(value) as T) : null;
-  } catch (error) {
-    logger.warn('Cache get failed', {
-      key,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+  if (!isCacheAvailable(redis)) {
     return null;
   }
+
+  return safeCacheOperation(
+    async () => {
+      const value = await redis!.get(key);
+      return value ? (JSON.parse(value) as T) : null;
+    },
+    null,
+    'get'
+  );
 };
 
 /**
@@ -70,59 +70,54 @@ export const setCachedValue = async <T>(
   value: T,
   ttl: number = 3600
 ): Promise<boolean> => {
-  try {
-    if (!redis) {
-      return false;
-    }
-
-    await redis.setex(key, ttl, JSON.stringify(value));
-    return true;
-  } catch (error) {
-    logger.warn('Cache set failed', {
-      key,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+  if (!isCacheAvailable(redis)) {
     return false;
   }
+
+  return safeCacheOperation(
+    async () => {
+      await redis!.setex(key, ttl, JSON.stringify(value));
+      return true;
+    },
+    false,
+    'set'
+  );
 };
 
 /**
  * Delete value from cache
  */
 export const deleteCachedValue = async (key: string): Promise<boolean> => {
-  try {
-    if (!redis) {
-      return false;
-    }
-
-    await redis.del(key);
-    return true;
-  } catch (error) {
-    logger.warn('Cache delete failed', {
-      key,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+  if (!isCacheAvailable(redis)) {
     return false;
   }
+
+  return safeCacheOperation(
+    async () => {
+      await redis!.del(key);
+      return true;
+    },
+    false,
+    'delete'
+  );
 };
 
 /**
  * Clear all cache
  */
 export const clearCache = async (): Promise<boolean> => {
-  try {
-    if (!redis) {
-      return false;
-    }
-
-    await redis.flushall();
-    return true;
-  } catch (error) {
-    logger.warn('Cache clear failed', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+  if (!isCacheAvailable(redis)) {
     return false;
   }
+
+  return safeCacheOperation(
+    async () => {
+      await redis!.flushall();
+      return true;
+    },
+    false,
+    'clear'
+  );
 };
 
 /**
@@ -143,7 +138,7 @@ export const closeCache = async (): Promise<void> => {
     }
   } catch (error) {
     logger.error('Failed to close Redis connection', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: formatError(error),
     });
   }
 };

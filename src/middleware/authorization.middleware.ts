@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/AppError';
 import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
+import { createErrorResponse } from '../dtos/response.dto';
 
 export type RoleType = 'ADMIN' | 'MODERATOR' | 'STYLIST' | 'USER';
 
@@ -37,19 +38,15 @@ export const authorize = (...allowedRoles: RoleType[]) => {
       next();
     } catch (err) {
       if (err instanceof AppError) {
-        res.status(err.statusCode).json({
-          success: false,
-          message: err.message,
-        });
+        res.status(err.statusCode).json(createErrorResponse(err.message));
         return;
       }
 
       const error = err instanceof Error ? err : new Error(String(err));
       logger.error('Authorization check failed', { error: error.message });
-      res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: MESSAGES.AUTHORIZATION_CHECK_FAILED,
-      });
+      res
+        .status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
+        .json(createErrorResponse(MESSAGES.AUTHORIZATION_CHECK_FAILED));
     }
   };
 };
@@ -87,19 +84,15 @@ export const authorizeOwner = (
     next();
   } catch (err) {
     if (err instanceof AppError) {
-      res.status(err.statusCode).json({
-        success: false,
-        message: err.message,
-      });
+      res.status(err.statusCode).json(createErrorResponse(err.message));
       return;
     }
 
     const error = err instanceof Error ? err : new Error(String(err));
     logger.error('Owner authorization check failed', { error: error.message });
-    res.status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: MESSAGES.AUTHORIZATION_CHECK_FAILED,
-    });
+    res
+      .status(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json(createErrorResponse(MESSAGES.AUTHORIZATION_CHECK_FAILED));
   }
 };
 

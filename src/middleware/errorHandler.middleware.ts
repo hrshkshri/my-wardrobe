@@ -4,6 +4,7 @@ import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 import { env } from '../config';
 import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
+import { createErrorResponse } from '../dtos/response.dto';
 import {
   PrismaClientKnownRequestError,
   PrismaClientValidationError,
@@ -64,9 +65,12 @@ export const errorHandler = (
   logger.error('Error occurred:', err);
 
   // Send error response
-  res.status(statusCode).json({
-    success: false,
-    message,
-    ...(env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
+  const errorResponse = createErrorResponse(message);
+
+  // Add stack trace in development
+  if (env.NODE_ENV === 'development') {
+    (errorResponse as any).stack = err.stack;
+  }
+
+  res.status(statusCode).json(errorResponse);
 };

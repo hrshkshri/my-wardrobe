@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 import { AppError } from '../utils/AppError';
 import { HTTP_STATUS_CODES, MESSAGES } from '../constants';
+import { createErrorResponse } from '../dtos/response.dto';
 
 // Extend Express Request to include user info
 declare global {
@@ -52,19 +53,15 @@ export const authenticate = (
     next();
   } catch (err) {
     if (err instanceof AppError) {
-      res.status(err.statusCode).json({
-        success: false,
-        message: err.message,
-      });
+      res.status(err.statusCode).json(createErrorResponse(err.message));
       return;
     }
 
     const error = err instanceof Error ? err : new Error(String(err));
     logger.error('Authentication failed', { error: error.message });
-    res.status(HTTP_STATUS_CODES.UNAUTHORIZED).json({
-      success: false,
-      message: MESSAGES.AUTH_FAILED,
-    });
+    res
+      .status(HTTP_STATUS_CODES.UNAUTHORIZED)
+      .json(createErrorResponse(MESSAGES.AUTH_FAILED));
   }
 };
 

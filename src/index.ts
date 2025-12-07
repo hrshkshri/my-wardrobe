@@ -16,6 +16,7 @@ import {
 } from './middleware/requestLogger.middleware';
 import { env, swaggerSpec } from './config';
 import { HTTP_STATUS_CODES } from './constants';
+import { createSuccessResponse } from './dtos/response.dto';
 
 const app: Express = express();
 
@@ -70,11 +71,11 @@ app.get(
  *                   example: 1.0.0
  */
 app.get('/', (_req: Request, res: Response) => {
-  res.status(HTTP_STATUS_CODES.OK).json({
-    success: true,
-    message: 'Welcome to My Wardrobe API',
-    version: '1.0.0',
-  });
+  res
+    .status(HTTP_STATUS_CODES.OK)
+    .json(
+      createSuccessResponse('Welcome to My Wardrobe API', { version: '1.0.0' })
+    );
 });
 
 // API Routes

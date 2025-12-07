@@ -27,31 +27,29 @@ export const requestIdMiddleware = (
   // Add request ID to response headers
   res.setHeader('x-request-id', requestId);
 
-  // Log request
-  logger.info('Incoming request', {
-    requestId,
-    method: req.method,
-    path: req.path,
-    ip: req.ip,
-    userAgent: req.header('user-agent'),
-  });
+  // Log incoming request
+  logger.info(`[${requestId}] ${req.method} ${req.path}`);
 
-  // Capture the original send method
+  // Capture the original send and json methods
   const originalSend = res.send;
+  const originalJson = res.json;
+
+  // Helper function to log response
+  const logResponse = () => {
+    const duration = Date.now() - req.startTime;
+    logger.info(`[${requestId}] ${res.statusCode} ${duration}ms`);
+  };
 
   // Override res.send to log response details
   res.send = function (data) {
-    const duration = Date.now() - req.startTime;
-
-    logger.info('Request completed', {
-      requestId,
-      method: req.method,
-      path: req.path,
-      statusCode: res.statusCode,
-      duration: `${duration}ms`,
-    });
-
+    logResponse();
     return originalSend.call(this, data);
+  };
+
+  // Override res.json to log response details (IMPORTANT: most endpoints use this)
+  res.json = function (data) {
+    logResponse();
+    return originalJson.call(this, data);
   };
 
   next();
@@ -63,20 +61,13 @@ export const requestIdMiddleware = (
 export const errorLoggingMiddleware = (
   err: Error,
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void => {
-  const duration = Date.now() - req.startTime;
-
-  logger.error('Request error', {
-    requestId: req.id,
-    method: req.method,
-    path: req.path,
-    statusCode: res.statusCode,
-    duration: `${duration}ms`,
-    error: err.message,
-    stack: err.stack,
-  });
+  const duration = req.startTime ? Date.now() - req.startTime : 0;
+  logger.error(
+    `[${req.id || 'unknown'}] ERROR: ${err.message} (${duration}ms)`
+  );
 
   next(err);
 };

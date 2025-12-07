@@ -21,9 +21,6 @@ const statusService = {
       // Calculate uptime in seconds
       const uptime = process.uptime();
 
-      // Get current timestamp
-      const timestamp = new Date().toISOString();
-
       // Get environment
       const environment = env.NODE_ENV;
 
@@ -33,7 +30,6 @@ const statusService = {
 
       return {
         status,
-        timestamp,
         uptime,
         environment,
         database: databaseStatus,
@@ -49,7 +45,6 @@ const statusService = {
     try {
       return {
         message: 'pong',
-        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       throw error;

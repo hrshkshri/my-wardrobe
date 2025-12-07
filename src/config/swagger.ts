@@ -47,58 +47,43 @@ const options = {
         },
       },
       schemas: {
+        // ===== Core Response Schemas =====
         ApiResponse: {
           type: 'object',
+          description: 'Standard successful API response wrapper',
           properties: {
             success: {
               type: 'boolean',
               description: 'Whether the request was successful',
+              example: true,
             },
             message: {
               type: 'string',
-              description: 'Response message',
+              description: 'Human-readable response message',
+              example: 'Operation completed successfully',
             },
             data: {
               type: 'object',
-              description: 'Response data',
+              description: 'Response data (structure varies by endpoint)',
             },
             traceId: {
               type: 'string',
-              description: 'Request trace ID for debugging',
+              description: 'Request trace ID for debugging and support',
+              example: '550e8400-e29b-41d4-a716-446655440000',
             },
             timestamp: {
               type: 'string',
               format: 'date-time',
-              description: 'Timestamp of the response',
+              description: 'Timestamp when the response was generated',
+              example: '2025-12-07T10:15:00.000Z',
             },
           },
-          required: ['success', 'message'],
+          required: ['success', 'message', 'timestamp'],
         },
-        PaginatedResponse: {
-          type: 'object',
-          properties: {
-            data: {
-              type: 'array',
-              items: {
-                type: 'object',
-              },
-            },
-            pagination: {
-              type: 'object',
-              properties: {
-                page: { type: 'integer' },
-                pageSize: { type: 'integer' },
-                total: { type: 'integer' },
-                totalPages: { type: 'integer' },
-                hasNextPage: { type: 'boolean' },
-                hasPreviousPage: { type: 'boolean' },
-              },
-              required: ['page', 'pageSize', 'total', 'totalPages'],
-            },
-          },
-        },
+
         Error: {
           type: 'object',
+          description: 'Standard error response',
           properties: {
             success: {
               type: 'boolean',
@@ -107,21 +92,79 @@ const options = {
             message: {
               type: 'string',
               description: 'Error message',
+              example: 'Resource not found',
             },
             errors: {
               type: 'object',
-              description: 'Validation errors (optional)',
+              description: 'Detailed validation errors (optional)',
+              example: {
+                email: ['Email is required', 'Email must be valid'],
+                password: ['Password must be at least 8 characters'],
+              },
             },
             traceId: {
               type: 'string',
               description: 'Request trace ID for debugging',
+              example: '550e8400-e29b-41d4-a716-446655440000',
             },
             timestamp: {
               type: 'string',
               format: 'date-time',
+              description: 'Timestamp when the error occurred',
             },
           },
-          required: ['success', 'message'],
+          required: ['success', 'message', 'timestamp'],
+        },
+
+        PaginatedResponse: {
+          type: 'object',
+          description: 'Paginated list response',
+          properties: {
+            data: {
+              type: 'array',
+              description: 'Array of items',
+              items: {
+                type: 'object',
+              },
+            },
+            pagination: {
+              type: 'object',
+              description: 'Pagination metadata',
+              properties: {
+                page: {
+                  type: 'integer',
+                  description: 'Current page number',
+                  example: 1,
+                },
+                pageSize: {
+                  type: 'integer',
+                  description: 'Number of items per page',
+                  example: 10,
+                },
+                total: {
+                  type: 'integer',
+                  description: 'Total number of items',
+                  example: 250,
+                },
+                totalPages: {
+                  type: 'integer',
+                  description: 'Total number of pages',
+                  example: 25,
+                },
+                hasNextPage: {
+                  type: 'boolean',
+                  description: 'Whether there is a next page',
+                  example: true,
+                },
+                hasPreviousPage: {
+                  type: 'boolean',
+                  description: 'Whether there is a previous page',
+                  example: false,
+                },
+              },
+              required: ['page', 'pageSize', 'total', 'totalPages'],
+            },
+          },
         },
       },
     },

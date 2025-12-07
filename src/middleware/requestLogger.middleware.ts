@@ -33,8 +33,7 @@ export const requestIdMiddleware = (
     logger.info(`[${requestId}] ${req.method} ${req.path}`);
   }
 
-  // Capture the original send and json methods
-  const originalSend = res.send;
+  // Capture the original json method
   const originalJson = res.json;
 
   // Helper function to log response
@@ -45,13 +44,8 @@ export const requestIdMiddleware = (
     }
   };
 
-  // Override res.send to log response details
-  res.send = function (data) {
-    logResponse();
-    return originalSend.call(this, data);
-  };
-
-  // Override res.json to log response details (IMPORTANT: most endpoints use this)
+  // Override res.json to log response details
+  // Note: Most endpoints use this method, so we only override json to avoid double logging
   res.json = function (data) {
     logResponse();
     return originalJson.call(this, data);

@@ -140,15 +140,7 @@ export const swaggerSpec = swaggerJsdoc(options);
  * Swagger UI configuration
  */
 export const swaggerUiOptions = {
-  customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'My Wardrobe API Documentation',
-  defaultModelsExpandDepth: 1,
-  defaultModelExpandDepth: 1,
-  deepLinking: true,
-  presets: [
-    'swaggerUIBundle.presets.apis',
-    'swaggerUIBundle.SwaggerUIStandalonePreset',
-  ],
 };
 
 export default { swaggerSpec, swaggerUiOptions };

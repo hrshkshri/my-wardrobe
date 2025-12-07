@@ -14,7 +14,7 @@ import {
   requestIdMiddleware,
   errorLoggingMiddleware,
 } from './middleware/requestLogger.middleware';
-import { env, swaggerSpec } from './config';
+import { env, swaggerSpec, swaggerUiOptions } from './config';
 import { HTTP_STATUS_CODES } from './constants';
 import { createSuccessResponse } from './dtos/response.dto';
 
@@ -39,10 +39,7 @@ app.use(apiLimiter);
 
 // Swagger/OpenAPI documentation
 app.use('/api-docs', swaggerUi.serve);
-app.get(
-  '/api-docs',
-  swaggerUi.setup(swaggerSpec, { customSiteTitle: 'My Wardrobe API' })
-);
+app.get('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 /**
  * @swagger

@@ -17,4 +17,16 @@ export const registerSchema = z.object({
   params: z.object({}).strict(),
 });
 
+const loginBodySchema = z.object({
+  email: z.string().email('Invalid email format').toLowerCase().trim(),
+  password: z.string().min(1, 'Password is required'),
+});
+
+export const loginSchema = z.object({
+  body: loginBodySchema,
+  query: z.object({}).strict(),
+  params: z.object({}).strict(),
+});
+
 export type RegisterInput = z.infer<typeof registerBodySchema>;
+export type LoginInput = z.infer<typeof loginBodySchema>;

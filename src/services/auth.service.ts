@@ -1,7 +1,7 @@
 import { prisma } from '../utils/database/prisma';
 import { AppError } from '../utils/errors/AppError';
-import { RegisterInput } from '../validators/auth.validator';
-import { hashPassword } from '../utils/passwords/bcrypt';
+import { RegisterInput, LoginInput } from '../validators/auth.validator';
+import { hashPassword, comparePassword } from '../utils/passwords/bcrypt';
 import { generateTokens } from '../utils/tokens/jwt';
 import { HTTP_STATUS_CODES } from '../constants';
 
@@ -31,6 +31,60 @@ const authService = {
         password: passwordHash,
       },
     });
+
+    // Generate JWT tokens (access + refresh)
+    const tokens = generateTokens({
+      id: authAccount.id,
+      email: authAccount.email,
+    });
+
+    // Store refresh token in database
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    await prisma.refreshToken.create({
+      data: {
+        token: tokens.refreshToken,
+        authAccountId: authAccount.id,
+        expiresAt,
+      },
+    });
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      authAccount: {
+        id: authAccount.id,
+        email: authAccount.email,
+      },
+    };
+  },
+
+  login: async (input: LoginInput) => {
+    const { email, password } = input;
+
+    // Find account by email
+    const authAccount = await prisma.authAccount.findUnique({
+      where: { email },
+    });
+
+    if (!authAccount) {
+      throw new AppError(
+        'Invalid email or password',
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
+    }
+
+    // Verify password
+    const isPasswordValid = await comparePassword(
+      password,
+      authAccount.password || ''
+    );
+
+    if (!isPasswordValid) {
+      throw new AppError(
+        'Invalid email or password',
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
+    }
 
     // Generate JWT tokens (access + refresh)
     const tokens = generateTokens({

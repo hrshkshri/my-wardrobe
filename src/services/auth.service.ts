@@ -1,11 +1,13 @@
 import { prisma } from '../utils/database/prisma';
 import { AppError } from '../utils/errors/AppError';
 import { RegisterInput } from '../validators/auth.validator';
+import { hashPassword } from '../utils/passwords/bcrypt';
+import { generateTokens } from '../utils/tokens/jwt';
+import { HTTP_STATUS_CODES } from '../constants';
 
 const authService = {
   register: async (input: RegisterInput) => {
-    const { email, password: _password } = input;
-    // _password will be used with bcrypt.hash() in the next step
+    const { email, password } = input;
 
     // Check if email already exists
     const existingEmail = await prisma.authAccount.findUnique({
@@ -13,25 +15,45 @@ const authService = {
     });
 
     if (existingEmail) {
-      throw new AppError('Email already registered', 409);
+      throw new AppError(
+        'Email already registered',
+        HTTP_STATUS_CODES.CONFLICT
+      );
     }
 
-    // Hash password (TODO: use bcrypt)
-    // const passwordHash = await bcrypt.hash(password, 10);
+    // Hash password with bcrypt (salt rounds: 12)
+    const passwordHash = await hashPassword(password);
 
-    // TODO: Create AuthAccount in database
-
-    // TODO: Create RefreshToken entry
-
-    // TODO: Generate JWT tokens
-
-    // TODO: Return tokens and user data
-    return {
-      accessToken: 'demo_access_token',
-      refreshToken: 'demo_refresh_token',
-      authAccount: {
-        id: 'demo_id',
+    // Create AuthAccount in database
+    const authAccount = await prisma.authAccount.create({
+      data: {
         email,
+        password: passwordHash,
+      },
+    });
+
+    // Generate JWT tokens (access + refresh)
+    const tokens = generateTokens({
+      id: authAccount.id,
+      email: authAccount.email,
+    });
+
+    // Store refresh token in database
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    await prisma.refreshToken.create({
+      data: {
+        token: tokens.refreshToken,
+        authAccountId: authAccount.id,
+        expiresAt,
+      },
+    });
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      authAccount: {
+        id: authAccount.id,
+        email: authAccount.email,
       },
     };
   },

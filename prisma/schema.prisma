@@ -170,10 +170,28 @@ model AuthAccount {
   adminProfile            AdminProfile?
   fcmTokens               FCMToken[]
   upgradeRequests         UpgradeRequest[]
+  refreshTokens           RefreshToken[]
 
   @@index([email])
   @@index([googleId])
   @@map("auth_accounts")
+}
+
+model RefreshToken {
+  id                      String    @id @default(uuid())
+  token                   String    @unique
+  authAccountId           String
+  authAccount             AuthAccount @relation(fields: [authAccountId], references: [id], onDelete: Cascade)
+
+  expiresAt               DateTime
+  isRevoked               Boolean   @default(false)
+  revokedAt               DateTime?
+  createdAt               DateTime  @default(now())
+
+  @@index([authAccountId])
+  @@index([expiresAt])
+  @@index([isRevoked])
+  @@map("refresh_tokens")
 }
 
 model UserProfile {

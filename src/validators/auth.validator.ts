@@ -1,11 +1,6 @@
 import { z } from 'zod';
 
-/**
- * Register validation schema
- * Validates: email, password
- * Note: firstName, lastName, and username are collected during onboarding
- */
-export const registerSchema = z.object({
+const registerBodySchema = z.object({
   email: z.string().email('Invalid email format').toLowerCase().trim(),
   password: z
     .string()
@@ -16,25 +11,10 @@ export const registerSchema = z.object({
     .regex(/[@$!%*?&]/, 'Password must contain special character (@$!%*?&)'),
 });
 
-/**
- * Login validation schema
- * Validates: email, password
- */
-// export const loginSchema = z.object({
-//   email: z.string().email('Invalid email format'),
-//   password: z.string().min(1, 'Password is required'),
-// });
+export const registerSchema = z.object({
+  body: registerBodySchema,
+  query: z.object({}).strict(),
+  params: z.object({}).strict(),
+});
 
-/**
- * Google OAuth redirect validation
- */
-// export const googleOAuthSchema = z.object({
-//   redirectUri: z.string().url('Invalid redirect URI'),
-// });
-
-/**
- * Infer types from schemas
- */
-export type RegisterInput = z.infer<typeof registerSchema>;
-// export type LoginInput = z.infer<typeof loginSchema>;
-// export type GoogleOAuthInput = z.infer<typeof googleOAuthSchema>;
+export type RegisterInput = z.infer<typeof registerBodySchema>;

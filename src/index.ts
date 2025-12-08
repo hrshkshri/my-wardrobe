@@ -8,7 +8,7 @@ import { AppError } from './utils/errors/AppError';
 import { corsOptions } from './utils/security/corsOptions';
 import { apiLimiter } from './utils/rateLimit/rateLimiter';
 import { logger } from './utils/logging/logger';
-import { statusRoutes } from './routes';
+import { setupRoutes } from './routes/routeHandler';
 import { setupSecurityMiddleware } from './middleware/security.middleware';
 import {
   requestIdMiddleware,
@@ -76,8 +76,8 @@ app.get('/', (_req: Request, res: Response) => {
     );
 });
 
-// API Routes
-app.use('/api/status', statusRoutes);
+// Setup all routes (separated in routes/setup.routes.ts)
+setupRoutes(app);
 
 // 404 Handler - Must be after all routes
 app.use((req: Request, _res: Response, _next: NextFunction) => {

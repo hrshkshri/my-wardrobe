@@ -16,7 +16,16 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "ts-node": {
+    "esm": false,
+    "experimentalEsm": false,
+    "require": ["tsconfig-paths/register"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

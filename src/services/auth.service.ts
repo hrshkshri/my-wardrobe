@@ -4,16 +4,15 @@ import { RegisterInput } from '../validators/auth.validator';
 
 const authService = {
   register: async (input: RegisterInput) => {
-    const { email, password, firstName, lastName } = input;
-
-    console.log('password:', password);
+    const { email, password: _password } = input;
+    // _password will be used with bcrypt.hash() in the next step
 
     // Check if email already exists
-    const existingAccount = await prisma.authAccount.findUnique({
+    const existingEmail = await prisma.authAccount.findUnique({
       where: { email },
     });
 
-    if (existingAccount) {
+    if (existingEmail) {
       throw new AppError('Email already registered', 409);
     }
 
@@ -33,8 +32,6 @@ const authService = {
       authAccount: {
         id: 'demo_id',
         email,
-        firstName,
-        lastName,
       },
     };
   },

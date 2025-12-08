@@ -144,6 +144,7 @@ enum CategoryType {
 model AuthAccount {
   id                      String    @id @default(uuid())
   email                   String    @unique
+  username                String?   @unique // Set during onboarding
   password                String?   // Nullable for OAuth users
 
   // Google OAuth & API Access

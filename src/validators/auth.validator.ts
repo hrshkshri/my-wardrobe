@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 /**
  * Register validation schema
- * Validates: email, password, firstName, lastName
+ * Validates: email, password
+ * Note: firstName, lastName, and username are collected during onboarding
  */
 export const registerSchema = z.object({
   email: z.string().email('Invalid email format').toLowerCase().trim(),
@@ -13,16 +14,6 @@ export const registerSchema = z.object({
     .regex(/[A-Z]/, 'Password must contain uppercase letter')
     .regex(/\d/, 'Password must contain number')
     .regex(/[@$!%*?&]/, 'Password must contain special character (@$!%*?&)'),
-  firstName: z
-    .string()
-    .min(2, 'First name must be at least 2 characters')
-    .max(50, 'First name must be at most 50 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'First name contains invalid characters'),
-  lastName: z
-    .string()
-    .min(2, 'Last name must be at least 2 characters')
-    .max(50, 'Last name must be at most 50 characters')
-    .regex(/^[a-zA-Z\s'-]+$/, 'Last name contains invalid characters'),
 });
 
 /**

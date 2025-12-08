@@ -3,6 +3,7 @@ import expressAsyncHandler from 'express-async-handler';
 import authService from '../services/auth.service';
 import { createSuccessResponse } from '../dtos/response.dto';
 import { HTTP_STATUS_CODES } from '../constants';
+import { AuthRequest } from '../middleware/auth.middleware';
 
 const authController = {
   register: expressAsyncHandler(async (req: Request, res: Response) => {
@@ -41,6 +42,32 @@ const authController = {
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
         authAccount: result.authAccount,
+      })
+    );
+  }),
+
+  refresh: expressAsyncHandler(async (req: Request, res: Response) => {
+    const result = await authService.refresh(req.body);
+
+    res.status(HTTP_STATUS_CODES.OK).json(
+      createSuccessResponse('Token refreshed', {
+        accessToken: result.accessToken,
+      })
+    );
+  }),
+
+  logout: expressAsyncHandler(async (req: Request, res: Response) => {
+    await authService.logout(req.body);
+
+    res
+      .status(HTTP_STATUS_CODES.OK)
+      .json(createSuccessResponse('Logout successful', {}));
+  }),
+
+  getMe: expressAsyncHandler(async (req: AuthRequest, res: Response) => {
+    res.status(HTTP_STATUS_CODES.OK).json(
+      createSuccessResponse('User retrieved', {
+        user: req.user,
       })
     );
   }),

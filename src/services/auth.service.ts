@@ -1,8 +1,13 @@
 import { prisma } from '../utils/database/prisma';
 import { AppError } from '../utils/errors/AppError';
-import { RegisterInput, LoginInput } from '../validators/auth.validator';
+import {
+  RegisterInput,
+  LoginInput,
+  RefreshInput,
+  LogoutInput,
+} from '../validators/auth.validator';
 import { hashPassword, comparePassword } from '../utils/passwords/bcrypt';
-import { generateTokens } from '../utils/tokens/jwt';
+import { generateTokens, verifyRefreshToken } from '../utils/tokens/jwt';
 import { HTTP_STATUS_CODES } from '../constants';
 
 const authService = {
@@ -110,6 +115,86 @@ const authService = {
         email: authAccount.email,
       },
     };
+  },
+
+  refresh: async (input: RefreshInput) => {
+    const { refreshToken } = input;
+
+    // Find the refresh token in database
+    const tokenRecord = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { authAccount: true },
+    });
+
+    if (!tokenRecord || !tokenRecord.authAccount) {
+      throw new AppError(
+        'Invalid refresh token',
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
+    }
+
+    // Check if token is revoked
+    if (tokenRecord.isRevoked) {
+      throw new AppError(
+        'Refresh token has been revoked',
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
+    }
+
+    // Check if token is expired
+    if (tokenRecord.expiresAt < new Date()) {
+      throw new AppError(
+        'Refresh token has expired',
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
+    }
+
+    // Verify JWT signature
+    try {
+      verifyRefreshToken(refreshToken);
+    } catch {
+      throw new AppError(
+        'Invalid refresh token',
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
+    }
+
+    // Generate new access token
+    const newAccessToken = generateTokens({
+      id: tokenRecord.authAccount.id,
+      email: tokenRecord.authAccount.email,
+    }).accessToken;
+
+    return {
+      accessToken: newAccessToken,
+    };
+  },
+
+  logout: async (input: LogoutInput) => {
+    const { refreshToken } = input;
+
+    // Find the refresh token in database
+    const tokenRecord = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+    });
+
+    if (!tokenRecord) {
+      throw new AppError(
+        'Invalid refresh token',
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
+    }
+
+    // Mark token as revoked
+    await prisma.refreshToken.update({
+      where: { token: refreshToken },
+      data: {
+        isRevoked: true,
+        revokedAt: new Date(),
+      },
+    });
+
+    return { success: true };
   },
 };
 

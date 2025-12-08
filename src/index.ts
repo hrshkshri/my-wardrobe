@@ -14,6 +14,7 @@ import {
   requestIdMiddleware,
   errorLoggingMiddleware,
 } from './middleware/requestLogger.middleware';
+import { responseWrapper } from './middleware/responseWrapper.middleware';
 import { env, swaggerSpec, swaggerUiOptions } from './config';
 import { HTTP_STATUS_CODES } from './constants';
 import { createSuccessResponse } from './dtos/response.dto';
@@ -30,6 +31,9 @@ app.use(compression());
 // Request ID middleware
 app.use(requestIdMiddleware);
 
+// Response wrapper middleware (injects traceId automatically)
+app.use(responseWrapper);
+
 // Standard middleware
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
@@ -42,32 +46,6 @@ app.use(apiLimiter);
 app.use('/api-docs', swaggerUi.serve);
 app.get('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
-/**
- * @swagger
- * /:
- *   get:
- *     summary: API welcome endpoint
- *     description: Returns welcome message and API version
- *     tags:
- *       - General
- *     responses:
- *       200:
- *         description: Welcome message
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Welcome to My Wardrobe API
- *                 version:
- *                   type: string
- *                   example: 1.0.0
- */
 app.get('/', (_req: Request, res: Response) => {
   res
     .status(HTTP_STATUS_CODES.OK)

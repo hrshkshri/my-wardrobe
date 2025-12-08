@@ -72,7 +72,7 @@ export const errorHandler = (
   // Log error
   logger.error('Error occurred:', err);
 
-  // Send error response
+  // Send error response (responseWrapper middleware will inject traceId)
   const errorResponse = createErrorResponse(message);
 
   // Add stack trace in development

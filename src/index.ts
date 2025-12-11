@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction, Express } from 'express';
 import cors from 'cors';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import swaggerUi from 'swagger-ui-express';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import { AppError } from './utils/errors/AppError';
@@ -33,6 +34,9 @@ app.use(requestIdMiddleware);
 
 // Response wrapper middleware (injects traceId automatically)
 app.use(responseWrapper);
+
+// Parse cookies (required for httpOnly cookie handling)
+app.use(cookieParser());
 
 // Standard middleware
 app.use(cors(corsOptions));

@@ -9,13 +9,21 @@ const DEFAULT_LOCAL_ORIGINS = [
   'http://localhost:5174',
 ];
 
+// Production origins
+const PRODUCTION_ORIGINS = [
+  'https://wardrobe.hrshkshri.me',
+  'https://wardrobeApi.hrshkshri.me',
+];
+
 // Get allowed origins from environment or use defaults
 const getAllowedOrigins = (): string[] => {
   const envOrigins = process.env.ALLOWED_ORIGINS;
   if (envOrigins) {
     return envOrigins.split(',').map((origin) => origin.trim());
   }
-  return DEFAULT_LOCAL_ORIGINS;
+  return env.NODE_ENV === 'production'
+    ? PRODUCTION_ORIGINS
+    : DEFAULT_LOCAL_ORIGINS;
 };
 
 const allowedOrigins = getAllowedOrigins();

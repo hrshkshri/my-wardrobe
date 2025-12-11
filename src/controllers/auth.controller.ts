@@ -4,23 +4,26 @@ import authService from '../services/auth.service';
 import { createSuccessResponse } from '../dtos/response.dto';
 import { HTTP_STATUS_CODES } from '../constants';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { AppError } from '../utils/errors/AppError';
+import { env } from '../config';
 
 const authController = {
   register: expressAsyncHandler(async (req: Request, res: Response) => {
     const result = await authService.register(req.body);
 
-    // TODO: Move refreshToken to HTTPOnly cookie for XSS protection (see: CORS setup needed)
-    // res.cookie('refreshToken', result.refreshToken, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === 'production',
-    //   sameSite: 'strict',
-    //   maxAge: 30 * 24 * 60 * 60 * 1000,
-    // });
+    // Set refreshToken in httpOnly cookie for XSS protection
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: '/',
+      domain: env.COOKIE_DOMAIN || undefined,
+    });
 
     res.status(HTTP_STATUS_CODES.CREATED).json(
       createSuccessResponse('Registration successful', {
         accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
         authAccount: result.authAccount,
       })
     );
@@ -29,25 +32,35 @@ const authController = {
   login: expressAsyncHandler(async (req: Request, res: Response) => {
     const result = await authService.login(req.body);
 
-    // TODO: Move refreshToken to HTTPOnly cookie for XSS protection (see: CORS setup needed)
-    // res.cookie('refreshToken', result.refreshToken, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === 'production',
-    //   sameSite: 'strict',
-    //   maxAge: 30 * 24 * 60 * 60 * 1000,
-    // });
+    // Set refreshToken in httpOnly cookie for XSS protection
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: '/',
+      domain: env.COOKIE_DOMAIN || undefined,
+    });
 
     res.status(HTTP_STATUS_CODES.OK).json(
       createSuccessResponse('Login successful', {
         accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
         authAccount: result.authAccount,
       })
     );
   }),
 
   refresh: expressAsyncHandler(async (req: Request, res: Response) => {
-    const result = await authService.refresh(req.body);
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new AppError(
+        'Refresh token not found',
+        HTTP_STATUS_CODES.UNAUTHORIZED
+      );
+    }
+
+    const result = await authService.refresh({ refreshToken });
 
     res.status(HTTP_STATUS_CODES.OK).json(
       createSuccessResponse('Token refreshed', {
@@ -57,7 +70,17 @@ const authController = {
   }),
 
   logout: expressAsyncHandler(async (req: Request, res: Response) => {
-    await authService.logout(req.body);
+    const refreshToken = req.cookies.refreshToken;
+
+    if (refreshToken) {
+      await authService.logout({ refreshToken });
+    }
+
+    // Clear the refreshToken cookie
+    res.clearCookie('refreshToken', {
+      path: '/',
+      domain: env.COOKIE_DOMAIN || undefined,
+    });
 
     res
       .status(HTTP_STATUS_CODES.OK)

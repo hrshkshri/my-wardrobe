@@ -28,9 +28,7 @@ export const loginSchema = z.object({
   params: z.object({}).strict(),
 });
 
-const refreshBodySchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required'),
-});
+const refreshBodySchema = z.object({}).strict();
 
 export const refreshSchema = z.object({
   body: refreshBodySchema,
@@ -38,9 +36,7 @@ export const refreshSchema = z.object({
   params: z.object({}).strict(),
 });
 
-const logoutBodySchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required'),
-});
+const logoutBodySchema = z.object({}).strict();
 
 export const logoutSchema = z.object({
   body: logoutBodySchema,
@@ -50,5 +46,7 @@ export const logoutSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerBodySchema>;
 export type LoginInput = z.infer<typeof loginBodySchema>;
-export type RefreshInput = z.infer<typeof refreshBodySchema>;
-export type LogoutInput = z.infer<typeof logoutBodySchema>;
+// RefreshInput comes from cookies, not request body
+export type RefreshInput = { refreshToken: string };
+// LogoutInput comes from cookies, not request body
+export type LogoutInput = { refreshToken: string };

@@ -15,6 +15,7 @@ const envSchema = z.object({
     .string()
     .min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  COOKIE_DOMAIN: z.string().optional(),
 });
 
 export type Environment = z.infer<typeof envSchema>;
